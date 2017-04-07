@@ -310,3 +310,5 @@ $_configuration['system_stable'] = NEW_VERSION_STABLE;
 // $_configuration['hide_lp_time'] = false;
 // Hide rating elements in pages ("Courses catalog" & "Most Popular courses")
 // $_configuration['hide_course_rating'] = false;
+// Hide session link of course_block on index/userportal
+// $_configuration['remove_session_url'] = true;

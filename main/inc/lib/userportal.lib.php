@@ -1708,6 +1708,7 @@ class IndexManager
                     $this->tpl->get_template('/user_portal/grid_session.tpl')
                 );
             } else {
+                $this->tpl->assign('remove_session_url',api_get_configuration_value('remove_session_url'));
                 $sessions_with_no_category = $this->tpl->fetch(
                     $this->tpl->get_template('user_portal/classic_session.tpl')
                 );
