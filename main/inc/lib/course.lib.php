@@ -4097,14 +4097,22 @@ class CourseManager
         // Show a hyperlink to the course, unless the course is closed and user is not course admin.
         $session_url = '';
         $params = array();
-        $params['icon'] = Display::return_icon(
-            'blackboard_blue.png',
-            null,
-            array(),
-            ICON_SIZE_LARGE,
-            null,
-            true
-        );
+        $showCustomIcon = api_get_setting('course_images_in_courses_list');
+        $iconName = basename($course_info['course_image']);
+
+        if ($showCustomIcon === 'true' && $iconName != 'course.png' ) {
+            $params['icon'] = $course_info['course_image'];
+        }else{
+            $params['icon'] = Display::return_icon(
+                'blackboard_blue.png',
+                null,
+                array(),
+                ICON_SIZE_LARGE,
+                null,
+                true
+            );
+        }
+
 
         // Display the "what's new" icons
         $notifications = '';
