@@ -4100,7 +4100,7 @@ class CourseManager
         $showCustomIcon = api_get_setting('course_images_in_courses_list');
         $iconName = basename($course_info['course_image']);
 
-        if ($showCustomIcon === 'true' && $iconName != 'course.png' ) {
+        if ($showCustomIcon === 'true' && $iconName != 'course.png') {
             $params['icon'] = $course_info['course_image'];
         }else{
             $params['icon'] = Display::return_icon(
