@@ -199,6 +199,9 @@ class Version200 extends AbstractMigrationChamilo
 
         $this->addSql("ALTER TABLE c_quiz_question_category CHANGE description description LONGTEXT DEFAULT NULL;");
 
+        //Add field in gradebook certificate table, which saves datetime about when the user see for first time the gradebook certificate.
+        $this->addSql("ALTER TABLE `gradebook_certificate` ADD `viewed_at` DATETIME DEFAULT NULL");
+
     }
 
     /**
