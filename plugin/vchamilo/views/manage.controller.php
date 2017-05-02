@@ -162,7 +162,6 @@ switch ($action) {
                 $content .= '</div>';
 
                 $tpl = new Template(get_lang('Snapshot'), true, true, false, true, false);
-                $tpl->assign('actions', '');
                 $tpl->assign('message', '<h4>'.$plugin->get_lang('vchamilosnapshot1').'</h4>');
                 $tpl->assign('content', $content);
                 $tpl->display_one_col_template();
@@ -227,7 +226,6 @@ switch ($action) {
                     }
 
                     $tpl = new Template(get_lang('Snapshot'), true, true, false, true, false);
-                    $tpl->assign('actions', '');
                     $tpl->assign('message', '<h4>'.$message.'</h4>');
                     $tpl->assign('content', $content);
                     $tpl->display_one_col_template();
@@ -290,7 +288,6 @@ switch ($action) {
                 $content .= '</form>';
 
                 $tpl = new Template(get_lang('Snapshot'), true, true, false, true, false);
-                $tpl->assign('actions', '');
                 $tpl->assign('message', $plugin->get_lang('vchamilosnapshot3'));
                 $tpl->assign('content', $content);
                 $tpl->display_one_col_template();
@@ -302,7 +299,7 @@ switch ($action) {
     case 'clearcache':
         // Removes cache directory.
         if (empty($automation)) {
-            if (array_key_exists('vids', $_REQUEST))  {
+            if (array_key_exists('vids', $_REQUEST)) {
                 $toclear = Database::select('*', 'vchamilo', array('where' => array("id IN ('$vidlist')" => array())));
             } else {
                 $vid = isset($_REQUEST['vid']) ? $_REQUEST['vid'] : 0;

@@ -4,7 +4,7 @@
 use ChamiloSession as Session;
 
 require_once __DIR__.'/../inc/global.inc.php';
-$current_course_tool  = TOOL_STUDENTPUBLICATION;
+$current_course_tool = TOOL_STUDENTPUBLICATION;
 
 api_protect_course_script(true);
 
@@ -99,7 +99,9 @@ if ($form->validate()) {
             $course_info,
             $session_id,
             $group_id,
-            $user_id
+            $user_id,
+            $_FILES['file'],
+            api_get_configuration_value('assignment_prevent_duplicate_upload')
         );
         $script = 'work_list.php';
         if ($is_allowed_to_edit) {

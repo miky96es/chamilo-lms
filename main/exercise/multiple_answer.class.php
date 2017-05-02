@@ -28,11 +28,9 @@ class MultipleAnswer extends Question
     }
 
     /**
-     * function which redifines Question::createAnswersForm
-     * @param the formvalidator instance
-     * @param the answers number to display
+     * @inheritdoc
      */
-    function createAnswersForm($form)
+    public function createAnswersForm($form)
     {
         $editorConfig = array(
             'ToolbarSet' => 'TestProposedAnswer',
@@ -77,7 +75,7 @@ class MultipleAnswer extends Question
 
         if ($nb_answers < 1) {
             $nb_answers = 1;
-            Display::display_normal_message(get_lang('YouHaveToCreateAtLeastOneAnswer'));
+            echo Display::return_message(get_lang('YouHaveToCreateAtLeastOneAnswer'));
         }
 
         for ($i = 1; $i <= $nb_answers; ++$i) {
@@ -125,9 +123,14 @@ class MultipleAnswer extends Question
             $answer_number = $form->addElement('text', 'counter[' . $i . ']', null, 'value="' . $i . '"');
             $answer_number->freeze();
 
-            $form->addElement('checkbox', 'correct[' . $i . ']', null, null,
-                'class="checkbox" style="margin-left: 0em;"');
-            $boxes_names[] = 'correct[' . $i . ']';
+            $form->addElement(
+                'checkbox',
+                'correct['.$i.']',
+                null,
+                null,
+                'class="checkbox" style="margin-left: 0em;"'
+            );
+            $boxes_names[] = 'correct['.$i.']';
 
             $form->addHtmlEditor("answer[$i]", null, null, true, $editorConfig);
             $form->addRule('answer[' . $i . ']', get_lang('ThisFieldIsRequired'), 'required');
@@ -141,16 +144,28 @@ class MultipleAnswer extends Question
         $form->addHtml('</tbody>');
         $form->addHtml('</table>');
 
-        $form->add_multiple_required_rule($boxes_names, get_lang('ChooseAtLeastOneCheckbox'), 'multiple_required');
+        $form->add_multiple_required_rule(
+            $boxes_names,
+            get_lang('ChooseAtLeastOneCheckbox'),
+            'multiple_required'
+        );
 
         $buttonGroup = [];
-
         global $text;
         if ($obj_ex->edit_exercise_in_lp == true) {
             // setting the save button here and not in the question class.php
             $buttonGroup[] = $form->addButtonDelete(get_lang('LessAnswer'), 'lessAnswers', true);
             $buttonGroup[] = $form->addButtonCreate(get_lang('PlusAnswer'), 'moreAnswers', true);
-            $buttonGroup[] = $form->addButtonSave($text, 'submitQuestion', true);
+            $buttonGroup[] = $form->addButton(
+                'submitQuestion',
+                $text,
+                'check',
+                'primary',
+                'default',
+                null,
+                ['id' => 'submit-question'],
+                true
+            );
         }
 
         $form->addGroup($buttonGroup);
@@ -179,7 +194,7 @@ class MultipleAnswer extends Question
         $objAnswer  = new Answer($this->id);
         $nb_answers = $form->getSubmitValue('nb_answers');
 
-        for($i=1 ; $i <= $nb_answers ; $i++) {
+        for ($i = 1; $i <= $nb_answers; $i++) {
             $answer = trim(str_replace(['<p>', '</p>'], '', $form -> getSubmitValue('answer['.$i.']')));
             $comment = trim(str_replace(['<p>', '</p>'], '', $form -> getSubmitValue('comment['.$i.']')));
             $weighting = trim($form -> getSubmitValue('weighting['.$i.']'));
@@ -191,10 +206,16 @@ class MultipleAnswer extends Question
                 $weighting = abs($weighting);
                 $weighting = -$weighting;
             }
-            if($weighting > 0) {
+            if ($weighting > 0) {
                 $questionWeighting += $weighting;
             }
-            $objAnswer -> createAnswer($answer,$goodAnswer,$comment,$weighting,$i);
+            $objAnswer->createAnswer(
+                $answer,
+                $goodAnswer,
+                $comment,
+                $weighting,
+                $i
+            );
         }
 
         // saves the answers into the data base

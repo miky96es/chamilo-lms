@@ -1,5 +1,6 @@
 <?php
 /* For license terms, see /license.txt */
+
 /**
  * Process purchase confirmation script for the Buy Courses plugin
  * @package chamilo.plugin.buycourses
@@ -40,8 +41,8 @@ switch ($serviceSale['payment_type']) {
         // purchase-specific fields are ignored. This little condition handle this fact.
         $itemPrice = $serviceSale['price'];
 
-        $returnUrl = api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/service_success.php';
-        $cancelUrl = api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/service_error.php';
+        $returnUrl = api_get_path(WEB_PLUGIN_PATH).'buycourses/src/service_success.php';
+        $cancelUrl = api_get_path(WEB_PLUGIN_PATH).'buycourses/src/service_error.php';
 
         // The extra params for handle the hard job, this var is VERY IMPORTANT !!
         $extra = '';
@@ -73,7 +74,7 @@ switch ($serviceSale['payment_type']) {
 
             $plugin->cancelServiceSale(intval($serviceSale['id']));
 
-            header('Location: '. api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/service_catalog.php');
+            header('Location: '.api_get_path(WEB_PLUGIN_PATH).'buycourses/src/service_catalog.php');
             exit;
         }
 
@@ -110,7 +111,7 @@ switch ($serviceSale['payment_type']) {
                 Display::addFlash(
                     Display::return_message($plugin->get_lang('OrderCancelled'), 'error', false)
                 );
-                header('Location: '. api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/service_catalog.php');
+                header('Location: '.api_get_path(WEB_PLUGIN_PATH).'buycourses/src/service_catalog.php');
                 exit;
             }
 
@@ -149,12 +150,12 @@ switch ($serviceSale['payment_type']) {
             );
 
             unset($_SESSION['bc_service_sale_id']);
-            header('Location: ' . api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/service_catalog.php');
+            header('Location: '.api_get_path(WEB_PLUGIN_PATH).'buycourses/src/service_catalog.php');
             exit;
         }
 
-        $form->addButton('confirm', $plugin->get_lang('ConfirmOrder'), 'check', 'success');
-        $form->addButtonCancel($plugin->get_lang('CancelOrder'), 'cancel');
+        $form->addButton('confirm', $plugin->get_lang('ConfirmOrder'), 'check', 'success', 'default', null, ['id' => 'confirm']);
+        $form->addButton('cancel', $plugin->get_lang('CancelOrder'), 'times', 'danger', 'default', null, ['id' => 'cancel']);
 
         $template = new Template();
 
@@ -164,7 +165,7 @@ switch ($serviceSale['payment_type']) {
         $template->assign('currency', $serviceSale['currency_id']);
         $template->assign('buying_service', $serviceSale);
         $template->assign('user', $userInfo);
-        $template->assign('service', $serviceSale);
+        $template->assign('service', $serviceSale['service']);
         $template->assign('transfer_accounts', $transferAccounts);
         $template->assign('form', $form->returnForm());
 
@@ -175,7 +176,6 @@ switch ($serviceSale['payment_type']) {
         break;
 
     case BuyCoursesPlugin::PAYMENT_TYPE_CULQI:
-
         // We need to include the main online script, acording to the Culqi documentation the JS needs to be loeaded
         // directly from the main url "https://integ-pago.culqi.com" because a local copy of this JS is not supported
         $htmlHeadXtra[] = '<script src="//integ-pago.culqi.com/js/v1"></script>';
@@ -199,7 +199,7 @@ switch ($serviceSale['payment_type']) {
                     )
                 );
 
-                header('Location: ' . api_get_path(WEB_PLUGIN_PATH) . 'buycourses/index.php');
+                header('Location: '.api_get_path(WEB_PLUGIN_PATH).'buycourses/index.php');
                 exit;
             }
         }

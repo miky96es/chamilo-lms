@@ -56,7 +56,7 @@ if (substr($refer_script, 0, 15) == '/fillsurvey.php') {
             $doc_url = substr($doc_url, 0, $dul);
         }
         // Group folder?
-        $gid_req = ($_GET['gidReq']) ? '&gidReq='.Security::remove_XSS($_GET['gidReq']) : '';
+        $gid_req = ($_GET['gidReq']) ? '&gidReq='.intval($_GET['gidReq']) : '';
         // Create the path
         $document_explorer = api_get_path(WEB_CODE_PATH).'document/document.php?curdirpath='.urlencode($doc_url).'&'.api_get_cidreq_params(Security::remove_XSS($_GET['cidReq'], 0, $gid_req));
         // Redirect
@@ -97,7 +97,7 @@ if (Security::check_abs_path($sys_course_path.$doc_url, $sys_course_path.'/')) {
     }
 
     if (!api_is_allowed_to_edit() && !$is_visible) {
-        Display::display_error_message(get_lang('ProtectedDocument'));//api_not_allowed backbutton won't work.
+        Display::display_error_message(get_lang('ProtectedDocument')); //api_not_allowed backbutton won't work.
         exit; // You shouldn't be here anyway.
     }
     // Launch event

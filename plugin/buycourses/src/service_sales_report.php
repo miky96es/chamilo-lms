@@ -5,6 +5,7 @@
  * List of pending payments of the Buy Courses plugin
  * @package chamilo.plugin.buycourses
  */
+
 $cidReset = true;
 
 require_once __DIR__.'/../config.php';

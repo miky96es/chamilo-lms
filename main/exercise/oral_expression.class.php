@@ -33,20 +33,23 @@ class OralExpression extends Question
     }
 
     /**
-     * function which redefine Question::createAnswersForm
-     * @param FormValidator $form
+     * @inheritdoc
      */
-    function createAnswersForm($form)
+    public function createAnswersForm($form)
     {
-        $form -> addElement('text','weighting', get_lang('Weighting'), array('class' => 'span1'));
-        global $text, $class;
+        $form->addText(
+            'weighting',
+            get_lang('Weighting'),
+            array('class' => 'span1')
+        );
+        global $text;
         // setting the save button here and not in the question class.php
         $form->addButtonSave($text, 'submitQuestion');
         if (!empty($this->id)) {
             $form -> setDefaults(array('weighting' => float_format($this->weighting, 1)));
         } else {
-            if ($this -> isContent == 1) {
-                $form -> setDefaults(array('weighting' => '10'));
+            if ($this->isContent == 1) {
+                $form->setDefaults(array('weighting' => '10'));
             }
         }
     }
@@ -102,7 +105,7 @@ class OralExpression extends Question
         }
         $this->storePath = $this->generateDirectory();
         $this->fileName = $this->generateFileName();
-        $this->filePath = $this->storePath . $this->fileName;
+        $this->filePath = $this->storePath.$this->fileName;
     }
 
     /**
@@ -111,26 +114,26 @@ class OralExpression extends Question
      */
     private function generateDirectory()
     {
-        $this->storePath = api_get_path(SYS_COURSE_PATH) . $this->course['path'] . '/exercises/';
+        $this->storePath = api_get_path(SYS_COURSE_PATH).$this->course['path'].'/exercises/';
 
         if (!is_dir($this->storePath)) {
             mkdir($this->storePath);
         }
 
-        if (!is_dir($this->storePath . $this->sessionId)) {
-            mkdir($this->storePath . $this->sessionId);
+        if (!is_dir($this->storePath.$this->sessionId)) {
+            mkdir($this->storePath.$this->sessionId);
         }
 
-        if (!empty($this->exerciseId) && !is_dir($this->storePath . $this->sessionId . '/' . $this->exerciseId)) {
-            mkdir($this->storePath . $this->sessionId . '/' . $this->exerciseId);
+        if (!empty($this->exerciseId) && !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId)) {
+            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId);
         }
 
-        if (!empty($this->id) && !is_dir($this->storePath . $this->sessionId . '/' . $this->exerciseId . '/' . $this->id)) {
-            mkdir($this->storePath . $this->sessionId . '/' . $this->exerciseId . '/' . $this->id);
+        if (!empty($this->id) && !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id)) {
+            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id);
         }
 
-        if (!empty($this->userId) && !is_dir($this->storePath . $this->sessionId . '/' . $this->exerciseId . '/' . $this->id . '/' . $this->userId)) {
-            mkdir($this->storePath . $this->sessionId . '/' . $this->exerciseId . '/' . $this->id . '/' . $this->userId);
+        if (!empty($this->userId) && !is_dir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id.'/'.$this->userId)) {
+            mkdir($this->storePath.$this->sessionId.'/'.$this->exerciseId.'/'.$this->id.'/'.$this->userId);
         }
 
         $params = [
@@ -189,11 +192,21 @@ class OralExpression extends Question
      */
     public function returnRecorder()
     {
-        $directory = '/..' . $this->generateRelativeDirectory();
-        $recordAudioView = new Template('', false, false,false, false, false, false);
+        $directory = '/..'.$this->generateRelativeDirectory();
+        $recordAudioView = new Template(
+            '',
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+        );
+
         $recordAudioView->assign('directory', $directory);
         $recordAudioView->assign('user_id', $this->userId);
         $recordAudioView->assign('file_name', $this->fileName);
+        $recordAudioView->assign('question_id', $this->id);
 
         $template = $recordAudioView->get_template('exercise/oral_expression.tpl');
 
@@ -233,17 +246,26 @@ class OralExpression extends Question
                     return '';
                 }
 
-                return $this->storePath . $result->getFilename();
+                return $this->storePath.$result->getFilename();
             }
         }
 
         foreach ($this->available_extensions as $extension) {
-            $file = "{$this->storePath}$fileName.$extension";
-            if (!is_file($file)) {
-                continue;
+            $audioFile = $this->storePath.$fileName;
+            $file = "$audioFile.$extension";
+
+            if (is_file($file)) {
+                return $file;
             }
 
-            return $file;
+            // Function handle_uploaded_document() adds the session and group id by default.
+            $file = "$audioFile"."__".$this->sessionId."__0.$extension";
+
+            if (is_file($file)) {
+                return $file;
+            }
+
+            continue;
         }
 
         return '';
@@ -283,12 +305,12 @@ class OralExpression extends Question
             $items[5] = 'temp_exe';
             $filename = implode('-', $items);
 
-            if (is_file($this->storePath . $filename . '.' . $extension)) {
-                $old_name = $this->storePath . $filename . '.' . $extension;
+            if (is_file($this->storePath.$filename.'.'.$extension)) {
+                $old_name = $this->storePath.$filename.'.'.$extension;
                 $items = explode('-', $this->fileName);
                 $items[5] = $exe_id;
                 $filename = $filename = implode('-', $items);
-                $new_name = $this->storePath . $filename . '.' . $extension;
+                $new_name = $this->storePath.$filename.'.'.$extension;
                 rename($old_name, $new_name);
                 break;
             }

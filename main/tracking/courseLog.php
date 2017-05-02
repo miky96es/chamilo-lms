@@ -30,6 +30,7 @@ if ($from == 'myspace') {
 // Access restrictions.
 $is_allowedToTrack =
     api_is_platform_admin() ||
+    SessionManager::user_is_general_coach(api_get_user_id(), $session_id) ||
     api_is_allowed_to_create_course() ||
     api_is_session_admin() ||
     api_is_drh() ||
@@ -258,7 +259,7 @@ $form_search->addElement('hidden', 'session_id', $sessionId);
 $form_search->addElement('hidden', 'id_session', $sessionId);
 $form_search->addElement('text', 'user_keyword');
 $form_search->addButtonSearch(get_lang('SearchUsers'));
-echo Display::toolbarAction('toolbar-courselog', [$actionsLeft, $form_search->returnForm(), $actionsRight], 3);
+echo Display::toolbarAction('toolbar-courselog', [$actionsLeft, $form_search->returnForm(), $actionsRight]);
 
 $course_name = get_lang('Course').' '.$courseInfo['name'];
 if ($session_id) {

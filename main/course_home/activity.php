@@ -49,7 +49,7 @@ if ($enabled === 'true') {
 
 // Start of tools for CourseAdmins (teachers/tutors)
 if ($session_id === 0 && api_is_course_admin() && api_is_allowed_to_edit(null, true)) {
-    $content .=  '<div class="alert alert-success" style="border:0px; margin-top: 0px;padding:0px;">
+    $content .= '<div class="alert alert-success" style="border:0px; margin-top: 0px;padding:0px;">
 		<div class="normal-message" id="id_normal_message" style="display:none">';
     $content .= Display::return_icon('indicator.gif').'&nbsp;&nbsp;';
     $content .= get_lang('PleaseStandBy');
@@ -79,7 +79,7 @@ if ($session_id === 0 && api_is_course_admin() && api_is_allowed_to_edit(null, t
     $list2 = CourseHome::get_tools_category(TOOL_COURSE_PLUGIN);
 
     $my_list = array_merge($my_list, $list2);
-    $items =  CourseHome::show_tools_category($my_list);
+    $items = CourseHome::show_tools_category($my_list);
     $content .= return_block(get_lang('Interaction'), $items, 'course-tools-interaction');
 
     $my_list = CourseHome::get_tools_category(TOOL_ADMIN_PLATFORM);
@@ -94,10 +94,10 @@ if ($session_id === 0 && api_is_course_admin() && api_is_allowed_to_edit(null, t
 			<span class="viewcaption">'.get_lang('SessionData').'</span>
 			<table class="course_activity_home">';
         $content .= CourseHome::show_session_data($session_id);
-        $content .=  '</table></div></div>';
+        $content .= '</table></div></div>';
     }
 
-    $content .=  '<div class="row">';
+    $content .= '<div class="row">';
     $my_list = CourseHome::get_tools_category(TOOL_STUDENT_VIEW);
     $content .= CourseHome::show_tools_category($my_list);
     $content .= '</div>';
@@ -179,7 +179,7 @@ function return_block($title, $content, $class = null)
 {
     $html = '<div class="row">
                 <div class="col-xs-12 col-md-12">
-                    <div class="title-tools">' . $title . '</div>
+                    <div class="title-tools">' . $title.'</div>
                 </div>
             </div>
             <div class="row '.$class.'">'.$content.'</div>';

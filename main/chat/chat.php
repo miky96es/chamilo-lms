@@ -18,12 +18,13 @@ $htmlHeadXtra[] = api_get_asset('emojionearea/dist/emojionearea.js');
 $htmlHeadXtra[] = api_get_asset('emojione/lib/js/emojione.min.js');
 
 $iconList = [];
+
 foreach (Emojione\Emojione::$shortcode_replace as $key => $icon) {
     if (!in_array($key, CourseChatUtils::getEmojisToInclude())) {
         continue;
     }
 
-    $iconList[$key] = strtoupper($icon) . '.png';
+    $iconList[$key] = strtoupper($icon).'.png';
 }
 
 $view = new Template(get_lang('Chat'), false, false, false, true, false);

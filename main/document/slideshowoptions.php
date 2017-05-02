@@ -41,7 +41,7 @@ $url = 'slideshowoptions.php?curdirpath='.$pathurl;
 $originaltoolname = '<b>'.get_lang('SlideshowOptions').'</b>';
 $interbreadcrumb[] = array('url' => $url, 'name' => $originaltoolname );
 
-Display::display_header($originalToolName, 'Doc');
+Display::display_header($originaltoolname, 'Doc');
 $image_resizing = isset($_SESSION['image_resizing']) ? $_SESSION['image_resizing'] : null;
 
 ?>
@@ -65,7 +65,7 @@ window.onload = <?php echo $image_resizing == 'resizing' ? 'enableresizing' : 'd
 <?php
 $actions = '<a href="document.php?action=exit_slideshow&curdirpath='.$pathurl.'">'.Display::return_icon('back.png',get_lang('BackTo').' '.get_lang('DocumentsOverview'),'',ICON_SIZE_MEDIUM).'</a>';
 $actions .= '<a href="slideshow.php?curdirpath='.$pathurl.'">'.Display::return_icon('slideshow.png',get_lang('BackTo').' '.get_lang('SlideShow'),'',ICON_SIZE_MEDIUM).'</a>';
-Display::toolbarAction('toolbar-slideshow', $content)
+echo Display::toolbarAction('toolbar-slideshow', [$actions])
 ?>
 <div class="panel panel-default">
     <div class="panel-body">
@@ -77,7 +77,7 @@ Display::toolbarAction('toolbar-slideshow', $content)
                     if ($image_resizing == 'noresizing' || $image_resizing == '') {
                             echo ' checked';
                     }
-		?>>
+        ?>>
             </label>
             <?php echo '<b>'. get_lang('NoResizing') . '</b>, ' . get_lang('NoResizingComment') ;?>
         </div>
@@ -87,7 +87,7 @@ Display::toolbarAction('toolbar-slideshow', $content)
                         if ($image_resizing == 'resizing_auto' || $image_resizing == '') {
                                 echo ' checked';
                         }
-		?>>
+        ?>>
             </label>
             <?php echo '<b>'. get_lang('ResizingAuto') . '</b>, ' . get_lang('ResizingAutoComment');?>
 	</div>
@@ -99,7 +99,7 @@ Display::toolbarAction('toolbar-slideshow', $content)
                             $width = $_SESSION['image_resizing_width'];
                             $height = $_SESSION['image_resizing_height'];
                     }
-		?>>
+        ?>>
             </label>
             <?php echo '<b>'. get_lang('Resizing') . '</b>, ' . get_lang('ResizingComment'); ?>
 	</div>
@@ -107,13 +107,13 @@ Display::toolbarAction('toolbar-slideshow', $content)
             <label class="col-sm-1 control-label"><?php echo get_lang('Width'); ?></label>
             <div class="col-sm-3">
                 <input class="form-control" name="width" type="text" id="width" <?php
-		if ($image_resizing == 'resizing') {
-			echo ' value="'.$width.'"';
-			echo ' class="enabled_input"';
+        if ($image_resizing == 'resizing') {
+            echo ' value="'.$width.'"';
+            echo ' class="enabled_input"';
                     } else {
                     echo ' class="disabled_input"';
                 }
-		?> >
+        ?> >
             </div>
             <div class="col-sm-8"></div>
         </div>
@@ -121,13 +121,13 @@ Display::toolbarAction('toolbar-slideshow', $content)
             <label class="col-sm-1 control-label"><?php echo get_lang('Height'); ?></label>
             <div class="col-sm-3">
                 <input class="form-control" name="height" type="text" id="height" <?php
-		if ($image_resizing == 'resizing') {
-			echo ' value="'.$height.'"';
-			echo ' class="enabled_input"';
-		} else {
+        if ($image_resizing == 'resizing') {
+            echo ' value="'.$height.'"';
+            echo ' class="enabled_input"';
+        } else {
                         echo ' class="disabled_input"';
                 }
-		?> >
+        ?> >
             </div>
             <div class="col-sm-8"></div>
         </div>

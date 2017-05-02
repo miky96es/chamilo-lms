@@ -17,15 +17,18 @@ if (api_get_setting('allow_social_tool') != 'true') {
 
 $this_section = SECTION_SOCIAL;
 $tool_name = get_lang('Search');
-$interbreadcrumb[] = array('url' => 'profile.php', 'name' => get_lang('SocialNetwork'));
+$interbreadcrumb[] = array(
+    'url' => api_get_path(WEB_CODE_PATH).'social/profile.php',
+    'name' => get_lang('SocialNetwork'),
+);
 
-$query = isset($_GET['q']) ? Security::remove_XSS($_GET['q']): null;
-$query_search_type = isset($_GET['search_type']) && in_array($_GET['search_type'], array('0','1','2')) ? $_GET['search_type'] : null;
+$query = isset($_GET['q']) ? Security::remove_XSS($_GET['q']) : null;
+$query_search_type = isset($_GET['search_type']) && in_array($_GET['search_type'], array('0', '1', '2')) ? $_GET['search_type'] : null;
 $extra_fields = UserManager::get_extra_filtrable_fields();
 $query_vars = array('q' => $query, 'search_type' => $query_search_type);
 if (!empty($extra_fields)) {
     foreach ($extra_fields as $extra_field) {
-        $field_name = 'field_' . $extra_field['variable'];
+        $field_name = 'field_'.$extra_field['variable'];
         if (isset($_GET[$field_name]) && $_GET[$field_name] != '0') {
             $query_vars[$field_name] = $_GET[$field_name];
         }
@@ -41,23 +44,28 @@ $groups = array();
 $totalGroups = array();
 $users = array();
 $totalUsers = array();
-
 $usergroup = new UserGroup();
 
 // I'm searching something
-if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) {
-    $itemPerPage = 8;
+if ($query != '' || ($query_vars['search_type'] == '1' && count($query_vars) > 2)) {
+    $itemPerPage = 6;
 
-    if ($_GET['search_type']=='0' || $_GET['search_type']=='1') {
+    if ($_GET['search_type'] == '0' || $_GET['search_type'] == '1') {
         $page = isset($_GET['users_page_nr']) ? intval($_GET['users_page_nr']) : 1;
-        $totalUsers = UserManager::get_all_user_tags($_GET['q'], 0, 0, $itemPerPage, true);
+        $totalUsers = UserManager::get_all_user_tags(
+            $_GET['q'],
+            0,
+            0,
+            $itemPerPage,
+            true
+        );
 
         $from = intval(($page - 1) * $itemPerPage);
         // Get users from tags
         $users = UserManager::get_all_user_tags($_GET['q'], 0, $from, $itemPerPage);
     }
 
-    if ($_GET['search_type']=='0' || $_GET['search_type']=='2') {
+    if ($_GET['search_type'] == '0' || $_GET['search_type'] == '2') {
         $pageGroup = isset($_GET['groups_page_nr']) ? intval($_GET['groups_page_nr']) : 1;
         // Groups
         $fromGroups = intval(($pageGroup - 1) * $itemPerPage);
@@ -72,7 +80,6 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
 
     $results = '<div id="whoisonline">';
     if (is_array($users) && count($users) > 0) {
-
         $results .= '<div class="row">';
         $buttonClass = 'btn btn-default btn-sm';
         foreach ($users as $user) {
@@ -83,7 +90,7 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
 
             // Show send invitation icon if they are not friends yet
             if ($relation_type != 3 && $relation_type != 4 && $user_info['user_id'] != api_get_user_id()) {
-                $sendInvitation = '<a href="#" class="'.$buttonClass.' btn-to-send-invitation" data-send-to="' . $user_info['user_id'] . '">
+                $sendInvitation = '<a href="#" class="'.$buttonClass.' btn-to-send-invitation" data-send-to="'.$user_info['user_id'].'">
                              <em class="fa fa-user"></em> '.get_lang('SendInvitation').'</a>';
             }
 
@@ -104,9 +111,7 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
                 ]
             );
 
-            $img = '<img src="'.$user_info['avatar'].'" class="img-responsive img-circle" width="100" height="100">';
-
-            if ($user_info['user_is_online']) {
+            if (!empty($user_info['user_is_online'])) {
                 $status_icon = Display::return_icon('online.png', get_lang('OnLine'), null, ICON_SIZE_TINY);
             } else {
                 $status_icon = Display::return_icon('offline.png', get_lang('Disconnected'), null, ICON_SIZE_TINY);
@@ -122,20 +127,11 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
             $user_info['complete_name'] = Display::url($user_info['complete_name'], $url);
             $invitations = $user['tag'].$sendInvitation.$sendMessage;
 
-            $results .= '<div class="col-md-3">
-                            <div class="items-user">
-                                <div class="items-user-avatar">
-                                '.$img.'
-                                </div>
-                                <div class="user-info">
-                                   <p>'.$user_info['complete_name'].'</p>
-                                   <div class="items-user-status">' . $status_icon . $user_icon . '</div>
-                                   <div class="toolbar">
-                                    '.$invitations.'
-                                   </div>
-                                </div>
-                            </div>
-                      </div>';
+            $results .= Display::getUserCard(
+                $user_info,
+                $status_icon.$user_icon,
+                $invitations
+            );
         }
         $results .= '</div>';
     }
@@ -181,12 +177,16 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
             } else {
                 $count_users_group = $count_users_group;
             }
-            $picture = $usergroup->get_picture_group($group['id'], $group['picture'], GROUP_IMAGE_SIZE_ORIGINAL);
-            //$tags = $usergroup->get_group_tags($group['id']);
+            $picture = $usergroup->get_picture_group(
+                $group['id'],
+                $group['picture'],
+                GROUP_IMAGE_SIZE_ORIGINAL
+            );
+
             $tags = null;
             $group['picture'] = '<img class="img-responsive img-circle" src="'.$picture['file'].'" />';
 
-            $members = Display::returnFontAwesomeIcon('user') . '( ' .$count_users_group . ' )';
+            $members = Display::returnFontAwesomeIcon('user').'( '.$count_users_group.' )';
             $item_1  = Display::tag('p', $url_open.$name.$url_close);
 
             $block_groups .= '
@@ -197,10 +197,10 @@ if ($query != '' || ($query_vars['search_type']=='1' && count($query_vars)>2) ) 
                         </div>
                         <div class="user-info">
                             '.$item_1.'
-                            <p>' . $members . '</p>    
-                            <p>' . $group['description'] . '</p>
-                            <p>' . $tags . '</p>
-                            <p>' . $url_open.get_lang('SeeMore') . $url_close . '</p>
+                            <p>' . $members.'</p>    
+                            <p>' . $group['description'].'</p>
+                            <p>' . $tags.'</p>
+                            <p>' . $url_open.get_lang('SeeMore').$url_close.'</p>
                         </div>
                     </div>
                 </div>';

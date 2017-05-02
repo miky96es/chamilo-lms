@@ -83,7 +83,6 @@ class FlatViewDataGenerator
     public function get_header_names($items_start = 0, $items_count = null, $show_detail = false)
     {
         $headers = array();
-
         if (isset($this->params['show_official_code']) && $this->params['show_official_code']) {
             $headers[] = get_lang('OfficialCode');
         }
@@ -103,6 +102,8 @@ class FlatViewDataGenerator
                 $headers[] = get_lang('FirstName');
             }
         }
+
+        $headers[] = get_lang('Username');
 
         if (!isset($items_count)) {
             $items_count = count($this->evals_links) - $items_start;
@@ -174,7 +175,6 @@ class FlatViewDataGenerator
                 ).$add_weight;
 
                 if (api_get_setting('gradebook_detailed_admin_view') === 'true') {
-
                     $links = $sub_cat->get_links();
                     $evaluations = $sub_cat->get_evaluations();
 
@@ -312,14 +312,14 @@ class FlatViewDataGenerator
         }
 
         // sort users array
-        if ($users_sorting & self :: FVDG_SORT_LASTNAME) {
+        if ($users_sorting & self::FVDG_SORT_LASTNAME) {
             usort($userTable, array('FlatViewDataGenerator','sort_by_last_name'));
 
-        } elseif ($users_sorting & self :: FVDG_SORT_FIRSTNAME) {
+        } elseif ($users_sorting & self::FVDG_SORT_FIRSTNAME) {
             usort($userTable, array('FlatViewDataGenerator','sort_by_first_name'));
         }
 
-        if ($users_sorting & self :: FVDG_SORT_DESC) {
+        if ($users_sorting & self::FVDG_SORT_DESC) {
             $userTable = array_reverse($userTable);
         }
 
@@ -425,6 +425,8 @@ class FlatViewDataGenerator
                 }
             }
 
+            $row[] = $user[1];
+
             $item_value = 0;
             $item_value_total = 0;
             $item_total = 0;
@@ -526,7 +528,7 @@ class FlatViewDataGenerator
                 if ($convert_using_the_global_weight) {
                     //$item_total = $main_weight;
                 }
-            } else  {
+            } else {
                 // All evaluations
                 $result = $this->parseEvaluations(
                     $user_id,
@@ -602,7 +604,7 @@ class FlatViewDataGenerator
         $evaluationsAlreadyAdded = array()
     ) {
         // Generate actual data array
-        $scoredisplay = ScoreDisplay :: instance();
+        $scoredisplay = ScoreDisplay::instance();
         $item_total = 0;
         $item_value_total = 0;
 
@@ -669,7 +671,9 @@ class FlatViewDataGenerator
                 (isset($this->params['only_total_category']) && $this->params['only_total_category'] == false)
             ) {
                 if (!$show_all) {
-                    if (in_array($item->get_type(), array(
+                    if (in_array(
+                        $item->get_type(),
+                        array(
                             LINK_EXERCISE,
                             LINK_DROPBOX,
                             LINK_STUDENTPUBLICATION,
@@ -677,7 +681,8 @@ class FlatViewDataGenerator
                             LINK_FORUM_THREAD,
                             LINK_ATTENDANCE,
                             LINK_SURVEY,
-                            LINK_HOTPOTATOES)
+                            LINK_HOTPOTATOES,
+                        )
                     )
                     ) {
                         if (!empty($score[0])) {
@@ -827,7 +832,7 @@ class FlatViewDataGenerator
         usort($usertable, array ('FlatViewDataGenerator','sort_by_first_name'));
 
         // generate actual data array
-        $scoredisplay = ScoreDisplay :: instance();
+        $scoredisplay = ScoreDisplay::instance();
         $data = array();
         $selected_users = $usertable;
         foreach ($selected_users as $user) {

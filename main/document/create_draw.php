@@ -73,7 +73,7 @@ if (!is_dir($filepath)) {
 $groupId = api_get_group_id();
 
 if (!empty($groupId)) {
-	$interbreadcrumb[] = array (
+	$interbreadcrumb[] = array(
         "url" => "../group/group_space.php?".api_get_cidreq(),
         "name" => get_lang('GroupSpace')
     );
@@ -109,8 +109,8 @@ Event::event_access_tool(TOOL_DOCUMENT);
 $display_dir = $dir;
 if (isset ($group)) {
 	$display_dir = explode('/', $dir);
-	unset ($display_dir[0]);
-	unset ($display_dir[1]);
+	unset($display_dir[0]);
+	unset($display_dir[1]);
 	$display_dir = implode('/', $display_dir);
 }
 
@@ -134,7 +134,7 @@ Display :: display_header($nameTools, 'Doc');
 
 echo '<div class="actions">';
 echo '<a href="document.php?id='.$document_id.'">'.
-    Display::return_icon('back.png',get_lang('BackTo').' '.get_lang('DocumentsOverview'),'',ICON_SIZE_MEDIUM).'</a>';
+    Display::return_icon('back.png', get_lang('BackTo').' '.get_lang('DocumentsOverview'), '', ICON_SIZE_MEDIUM).'</a>';
 echo '</div>';
 
 if (api_browser_support('svg')) {

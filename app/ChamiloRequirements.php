@@ -78,11 +78,11 @@ class ChamiloRequirements extends SymfonyRequirements
             'Install and enable the <strong>mbstring</strong> extension.'
         );
 
-        $this->addChamiloRequirement(
+        /*$this->addChamiloRequirement(
             function_exists('mcrypt_encrypt'),
             'mcrypt_encrypt() should be available',
             'Install and enable the <strong>Mcrypt</strong> extension.'
-        );
+        );*/
 
         $this->addChamiloRequirement(
             class_exists('Locale'),

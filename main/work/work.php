@@ -6,7 +6,7 @@
  **/
 
 require_once __DIR__.'/../inc/global.inc.php';
-$current_course_tool  = TOOL_STUDENTPUBLICATION;
+$current_course_tool = TOOL_STUDENTPUBLICATION;
 
 api_protect_course_script(true);
 
@@ -36,7 +36,7 @@ $tool_name = get_lang('StudentPublications');
 $item_id = isset($_REQUEST['item_id']) ? intval($_REQUEST['item_id']) : null;
 $origin = isset($_REQUEST['origin']) ? Security::remove_XSS($_REQUEST['origin']) : '';
 $course_dir = api_get_path(SYS_COURSE_PATH).$courseInfo['path'];
-$base_work_dir = $course_dir . '/work';
+$base_work_dir = $course_dir.'/work';
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : 'list';
 
 //Download folder
@@ -73,7 +73,7 @@ if (!empty($groupId)) {
         'url' => api_get_path(WEB_CODE_PATH).'work/work.php?'.api_get_cidreq(),
         'name' => get_lang('StudentPublications'),
     );
-    $url_dir = api_get_path(WEB_CODE_PATH).'work/work.php?&id=' . $work_id.'&'.api_get_cidreq();
+    $url_dir = api_get_path(WEB_CODE_PATH).'work/work.php?&id='.$work_id.'&'.api_get_cidreq();
     if (!empty($my_folder_data)) {
         $interbreadcrumb[] = array('url' => $url_dir, 'name' =>  $my_folder_data['title']);
     }
@@ -116,7 +116,7 @@ if (!empty($groupId)) {
             $interbreadcrumb[] = array('url' => '#', 'name' => get_lang('EditToolOptions'));
         }
         if ($action == 'create_dir') {
-            $interbreadcrumb[] = array('url' => '#','name' => get_lang('CreateAssignment'));
+            $interbreadcrumb[] = array('url' => '#', 'name' => get_lang('CreateAssignment'));
         }
     }
 }
@@ -163,14 +163,17 @@ switch ($action) {
         if (!$is_allowed_to_edit) {
             api_not_allowed();
         }
+        $addUrl = api_get_path(WEB_CODE_PATH).'work/work.php?action=create_dir&'.api_get_cidreq();
         $form = new FormValidator(
             'form1',
             'post',
-            api_get_path(WEB_CODE_PATH) . 'work/work.php?action=create_dir&' . api_get_cidreq()
+            $addUrl
         );
         $form->addElement('header', get_lang('CreateAssignment'));
         $form->addElement('hidden', 'action', 'add');
-        $defaults = isset($_POST) ? $_POST : array();
+        // Set default values
+        $defaults = !empty($_POST) ? $_POST : ['allow_text_assignment' => 2];
+
         $form = getFormWork($form, $defaults);
         $form->addButtonCreate(get_lang('CreateDirectory'));
 
@@ -186,6 +189,7 @@ switch ($action) {
             if ($result) {
                 $message = Display::return_message(get_lang('DirectoryCreated'), 'success');
             } else {
+                $currentUrl = $addUrl;
                 $message = Display::return_message(get_lang('CannotCreateDir'), 'error');
             }
 
@@ -202,7 +206,7 @@ switch ($action) {
             $result = deleteDirWork($_REQUEST['id']);
             if ($result) {
                 $message = Display::return_message(
-                    get_lang('DirDeleted') . ': ' . $work_to_delete['title'],
+                    get_lang('DirDeleted').': '.$work_to_delete['title'],
                     'success'
                 );
                 Display::addFlash($message);
@@ -233,16 +237,16 @@ switch ($action) {
             if ($move_to_path == -1) {
                 $move_to_path = '/';
             } elseif (substr($move_to_path, -1, 1) != '/') {
-                $move_to_path = $move_to_path .'/';
+                $move_to_path = $move_to_path.'/';
             }
 
             // Security fix: make sure they can't move files that are not in the document table
             if ($path = get_work_path($item_id)) {
-                if (move($course_dir.'/'.$path, $base_work_dir . $move_to_path)) {
+                if (move($course_dir.'/'.$path, $base_work_dir.$move_to_path)) {
                     // Update db
                     updateWorkUrl(
                         $item_id,
-                        'work' . $move_to_path,
+                        'work'.$move_to_path,
                         $_REQUEST['move_to_id']
                     );
 
@@ -341,7 +345,7 @@ switch ($action) {
             $content .= '</div>';
             $content .= '</div>';
             $content .= '<div id="student-list-work" style="display: none" class="table-responsive">';
-            $content .= '<div class="toolbar"><a id="closed-view-list" href="#"><em class="fa fa-times-circle"></em> ' .get_lang('Close'). '</a></div>';
+            $content .= '<div class="toolbar"><a id="closed-view-list" href="#"><em class="fa fa-times-circle"></em> '.get_lang('Close').'</a></div>';
             $content .= showStudentList($work_id);
             $content .= '</div>';
         } else {

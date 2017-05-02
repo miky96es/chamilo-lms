@@ -156,15 +156,34 @@ class Database
         $entityManager = EntityManager::create($params, $config);
         $sysPath = !empty($sysPath) ? $sysPath : api_get_path(SYS_PATH);
 
-        //vendor/symfony/symfony/src/Symfony/Component/Validator/Constraint.php
-        // Registering Constraints
-        AnnotationRegistry::registerAutoloadNamespace(
-            'Symfony\Component\Validator\Constraint',
-            $sysPath."vendor/symfony/symfony/src"
-        );
+        $uniqueEntityPath = $sysPath.'vendor/symfony/symfony/src/Symfony/Bridge/Doctrine/Validator/Constraints/UniqueEntity.php';
+
+        // Folder symfony/symfony/src doesn't exists in chash use the component folder
+        if (!file_exists($uniqueEntityPath)) {
+            $uniqueEntityPath = $sysPath.'vendor/symfony/doctrine-bridge/Validator/Constraints/UniqueEntity.php';
+
+            AnnotationRegistry::registerLoader(
+                function ($class) use ($sysPath) {
+                    $file = str_replace("\\", DIRECTORY_SEPARATOR, $class).".php";
+                    $file = str_replace('Symfony/Component/Validator', '', $file);
+                    $file = $sysPath.'vendor/symfony/validator'.$file;
+                    if (file_exists($file)) {
+                        // file exists makes sure that the loader fails silently
+                        require_once $file;
+                        return true;
+                    }
+                }
+            );
+        } else {
+            // Registering Constraints
+            AnnotationRegistry::registerAutoloadNamespace(
+                'Symfony\Component\Validator\Constraint',
+                $sysPath.'vendor/symfony/symfony/src'
+            );
+        }
 
         AnnotationRegistry::registerFile(
-            $sysPath.'vendor/symfony/symfony/src/Symfony/Bridge/Doctrine/Validator/Constraints/UniqueEntity.php'
+            $uniqueEntityPath
         );
 
         // Registering gedmo extensions
@@ -255,6 +274,10 @@ class Database
      */
     public static function fetch_assoc(Statement $result)
     {
+        if ($result === false) {
+            return array();
+        }
+
         return $result->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -281,6 +304,9 @@ class Database
      */
     public static function fetch_row(Statement $result)
     {
+        if ($result === false) {
+            return array();
+        }
         return $result->fetch(PDO::FETCH_NUM);
     }
 
@@ -312,6 +338,9 @@ class Database
      */
     public static function num_rows(Statement $result)
     {
+        if ($result === false) {
+            return 0;
+        }
         return $result->rowCount();
     }
 
@@ -353,8 +382,6 @@ class Database
             } catch (Exception $e) {
                 error_log($e->getMessage());
                 api_not_allowed(false, get_lang('GeneralError'));
-
-                exit;
             }
         }
 
@@ -451,11 +478,10 @@ class Database
             $updateSql = '';
             $count = 1;
 
-            if ($showQuery) {
-                var_dump($attributes);
-            }
-
             foreach ($attributes as $key => $value) {
+                if ($showQuery) {
+                    echo $key . ': ' . $value . PHP_EOL;
+                }
                 $updateSql .= "$key = :$key ";
                 if ($count < count($attributes)) {
                     $updateSql.= ', ';
@@ -559,11 +585,11 @@ class Database
                         if (is_array($value_array)) {
                             $clean_values = array();
                             foreach ($value_array as $item) {
-                                $item = Database::escape_string($item);
+                                $item = self::escape_string($item);
                                 $clean_values[]= $item;
                             }
                         } else {
-                            $value_array = Database::escape_string($value_array);
+                            $value_array = self::escape_string($value_array);
                             $clean_values = $value_array;
                         }
 

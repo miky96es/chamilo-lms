@@ -51,7 +51,7 @@ switch ($action) {
                     $groupId,
                     $userId,
                     $file,
-                    false,
+                    api_get_configuration_value('assignment_prevent_duplicate_upload'),
                     false
                 );
 
@@ -111,7 +111,7 @@ switch ($action) {
                 echo 'false';
                 break;
             }
-            $work_table = Database:: get_course_table(
+            $work_table = Database::get_course_table(
                 TABLE_STUDENT_PUBLICATION
             );
 
@@ -138,8 +138,8 @@ switch ($action) {
 
                 $json['type'] = api_htmlentities($file['type']);
                 $json['size'] = format_file_size($file['size']);
-
             }
+
             if (isset($result['url'])) {
                 $json['result'] = Display::return_icon(
                     'accept.png',

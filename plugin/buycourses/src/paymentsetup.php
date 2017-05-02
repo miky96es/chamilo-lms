@@ -25,7 +25,7 @@ if (isset($_GET['action'], $_GET['id'])) {
             Display::return_message(get_lang('ItemRemoved'), 'success')
         );
 
-        header('Location: ' . api_get_self());
+        header('Location: '.api_get_self());
         exit;
     }
 }
@@ -43,7 +43,7 @@ if ($currencyForm->validate()) {
         Display::return_message(get_lang('Saved'), 'success')
     );
 
-    header('Location:' . api_get_self());
+    header('Location:'.api_get_self());
     exit;
 }
 
@@ -75,7 +75,7 @@ foreach ($currencies as $currency) {
     }
 }
 
-$currencyForm->addTextarea('terms_and_conditions', [ get_lang('TermsAndConditions'), $plugin->get_lang('WriteHereTheTermsAndConditionsOfYourECommerce') ], '');
+$currencyForm->addTextarea('terms_and_conditions', [get_lang('TermsAndConditions'), $plugin->get_lang('WriteHereTheTermsAndConditionsOfYourECommerce')], '');
 $currencyForm->addButtonSave(get_lang('Save'));
 $currencyForm->setDefaults($plugin->getGlobalParameters());
 
@@ -92,7 +92,7 @@ if ($paypalForm->validate()) {
         Display::return_message(get_lang('Saved'), 'success')
     );
 
-    header('Location:' . api_get_self());
+    header('Location:'.api_get_self());
     exit;
 }
 
@@ -131,7 +131,7 @@ if ($commissionForm->validate()) {
         Display::return_message(get_lang('Saved'), 'success')
     );
 
-    header('Location:' . api_get_self());
+    header('Location:'.api_get_self());
     exit;
 }
 
@@ -157,7 +157,7 @@ if ($transferForm->validate()) {
         Display::return_message(get_lang('Saved'), 'success')
     );
 
-    header('Location:' . api_get_self());
+    header('Location:'.api_get_self());
     exit;
 }
 
@@ -196,7 +196,7 @@ if ($culqiForm->validate()) {
         Display::return_message(get_lang('Saved'), 'success')
     );
 
-    header('Location:' . api_get_self());
+    header('Location:'.api_get_self());
     exit;
 }
 
@@ -218,7 +218,7 @@ $culqiForm->setDefaults($plugin->getCulqiParams());
 
 // breadcrumbs
 $interbreadcrumb[] = [
-    'url' => api_get_path(WEB_PLUGIN_PATH) . 'buycourses/index.php',
+    'url' => api_get_path(WEB_PLUGIN_PATH).'buycourses/index.php',
     'name' => $plugin->get_lang('plugin_title')
 ];
 

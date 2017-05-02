@@ -28,7 +28,7 @@ if (api_is_platform_admin() == false && $locked == true) {
 
 $htmlHeadXtra[] = to_javascript_work();
 $interbreadcrumb[] = array(
-    'url' => api_get_path(WEB_CODE_PATH) . 'work/work.php?' . api_get_cidreq(),
+    'url' => api_get_path(WEB_CODE_PATH).'work/work.php?'.api_get_cidreq(),
     'name' => get_lang('StudentPublications')
 );
 $interbreadcrumb[] = array('url' => '#', 'name' => get_lang('Edit'));
@@ -36,7 +36,7 @@ $interbreadcrumb[] = array('url' => '#', 'name' => get_lang('Edit'));
 $form = new FormValidator(
     'edit_dir',
     'post',
-    api_get_path(WEB_CODE_PATH) . 'work/edit_work.php?id=' . $workId . '&' . api_get_cidreq()
+    api_get_path(WEB_CODE_PATH).'work/edit_work.php?id='.$workId.'&'.api_get_cidreq()
 );
 $form->addElement('header', get_lang('Edit'));
 
@@ -80,14 +80,31 @@ if (!empty($homework['ends_on'])) {
 }
 
 $defaults['add_to_calendar'] = isset($homework['add_to_calendar']) ? $homework['add_to_calendar'] : null;
-$form = getFormWork($form, $defaults);
+$form = getFormWork($form, $defaults, $workId);
 $form->addElement('hidden', 'work_id', $workId);
 $form->addButtonUpdate(get_lang('ModifyDirectory'));
 
+$currentUrl = api_get_path(WEB_CODE_PATH).'work/edit_work.php?id='.$workId.'&'.api_get_cidreq();
 if ($form->validate()) {
     $params = $form->getSubmitValues();
     $params['enableEndDate'] = isset($params['enableEndDate']) ? true : false;
     $params['enableExpiryDate'] = isset($params['enableExpiryDate']) ? true : false;
+
+    if ($params['enableExpiryDate'] &&
+        $params['enableEndDate']
+    ) {
+        if ($params['expires_on'] > $params['ends_on']) {
+            Display::addFlash(
+                Display::return_message(
+                    get_lang('DateExpiredNotBeLessDeadLine'),
+                    'warning'
+                )
+            );
+            header('Location: '.$currentUrl);
+            exit;
+        }
+    }
+
     $workId = $params['work_id'];
     $editCheck = false;
     $workData = get_work_data_by_id($workId);
@@ -103,8 +120,7 @@ if ($form->validate()) {
         updatePublicationAssignment($workId, $params, $courseInfo, $groupId);
         updateDirName($workData, $params['new_dir']);
 
-        $currentUrl = api_get_path(WEB_CODE_PATH).'work/edit_work.php?id='.$workId.'&'.api_get_cidreq();
-        Display::addFlash(Display::return_message(get_lang('FolderEdited'), 'success'));
+        Display::addFlash(Display::return_message(get_lang('Updated'), 'success'));
         header('Location: '.$currentUrl);
         exit;
 

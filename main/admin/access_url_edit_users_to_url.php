@@ -1,8 +1,8 @@
 <?php
 /* For licensing terms, see /license.txt */
 /**
- * 	@package chamilo.admin
- * 	@author Julio Montoya <gugli100@gmail.com>
+ * @package chamilo.admin
+ * @author Julio Montoya <gugli100@gmail.com>
  */
 // resetting the course id
 $cidReset = true;
@@ -24,8 +24,8 @@ if (!api_get_multiple_access_url()) {
 
 // Database Table Definitions
 $tbl_user = Database::get_main_table(TABLE_MAIN_USER);
-$tbl_access_url_rel_user = Database :: get_main_table(TABLE_MAIN_ACCESS_URL_REL_USER);
-$tbl_access_url = Database :: get_main_table(TABLE_MAIN_ACCESS_URL);
+$tbl_access_url_rel_user = Database::get_main_table(TABLE_MAIN_ACCESS_URL_REL_USER);
+$tbl_access_url = Database::get_main_table(TABLE_MAIN_ACCESS_URL);
 
 // setting breadcrumbs
 $tool_name = get_lang('EditUsersToURL');
@@ -48,10 +48,8 @@ $htmlHeadXtra[] = '<script>
 function add_user_to_url(code, content) {
 	document.getElementById("user_to_add").value = "";
 	document.getElementById("ajax_list_users").innerHTML = "";
-
 	destination = document.getElementById("destination_users");
 	destination.options[destination.length] = new Option(content,code);
-
 	destination.selectedIndex = -1;
 	sortOptions(destination.options);
 }
@@ -136,7 +134,7 @@ if (isset($_POST['form_sent']) && $_POST['form_sent']) {
 Display::display_header($tool_name);
 
 if (!empty($message)) {
-    Display::display_normal_message($message, false);
+    Display::addFlash(Display::return_message($message, 'normal', false));
 }
 
 echo '<div class="actions">';
@@ -223,7 +221,7 @@ $url_list = UrlManager::get_url_data();
 
 <?php
 if (!empty($errorMsg)) {
-    Display::display_normal_message($errorMsg); //main API
+    Display::addFlash(Display::return_message($errorMsg, 'normal')); //main API
 }
 ?>
 

@@ -15,8 +15,8 @@ $_course = api_get_course_info();
 parse_str($_SERVER['QUERY_STRING'], $params);
 
 if (isset($params['waminame']) && isset($params['wamidir']) && isset($params['wamiuserid'])) {
-    $waminame   = $params['waminame'];
-    $wamidir    = $params['wamidir'];
+    $waminame = $params['waminame'];
+    $wamidir = $params['wamidir'];
     $wamiuserid = $params['wamiuserid'];
 } else {
     api_not_allowed();
@@ -50,7 +50,7 @@ if ($ext != 'wav') {
 // Do not use here check Fileinfo method because return: text/plain
 
 $dirBaseDocuments = api_get_path(SYS_COURSE_PATH).$_course['path'].'/document';
-$saveDir = $dirBaseDocuments . $wamidir;
+$saveDir = $dirBaseDocuments.$wamidir;
 
 if (!is_dir($saveDir)) {
     DocumentManager::createDefaultAudioFolder($_course);
@@ -58,7 +58,7 @@ if (!is_dir($saveDir)) {
 
 //avoid duplicates
 $waminame_to_save = $waminame;
-$waminame_noex    = basename($waminame, ".wav");
+$waminame_noex = basename($waminame, ".wav");
 if (file_exists($saveDir.'/'.$waminame_noex.'.'.$ext)) {
     $i = 1;
     while (file_exists($saveDir.'/'.$waminame_noex.'_'.$i.'.'.$ext)) {
@@ -90,7 +90,7 @@ $output = true;
 ob_start();
 
 // Strangely the file path changes with a double extension
-copy($documentPath, $documentPath . '.wav');
+copy($documentPath, $documentPath.'.wav');
 
 $documentData = DocumentManager::upload_document(
     $file,

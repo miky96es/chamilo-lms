@@ -93,7 +93,7 @@ class Security
             $rel_path = '/'.$rel_path;
         }
         $abs_path = $current_path.$rel_path;
-        $true_path=str_replace("\\", '/', realpath($abs_path));
+        $true_path = str_replace("\\", '/', realpath($abs_path));
         $found = strpos($true_path.'/', $checker_path);
         if ($found === 0) {
             return true;
@@ -278,7 +278,7 @@ class Security
         }
 
         if ($user_status == COURSEMANAGERLOWSECURITY) {
-            return $var;  // No filtering.
+            return $var; // No filtering.
         }
 
         static $purifier = array();
@@ -301,7 +301,7 @@ class Security
             }
 
             // Shows _target attribute in anchors
-            $config->set('Attr.AllowedFrameTargets', array('_blank','_top','_self', '_parent'));
+            $config->set('Attr.AllowedFrameTargets', array('_blank', '_top', '_self', '_parent'));
 
             if ($user_status == STUDENT) {
                 global $allowed_html_student;
@@ -431,5 +431,59 @@ class Security
             return '';
         }
         return $image_path;
+    }
+
+    /**
+     * Get password requirements
+     * It checks config value 'password_requirements' or uses the "classic"
+     * Chamilo password requirements.
+     *
+     * @return array
+     */
+    public static function getPasswordRequirements()
+    {
+        // Default
+        $requirements = [
+            'min' => [
+                'lowercase' => 0,
+                'uppercase' => 0,
+                'numeric' => 2,
+                'length' => 5
+            ]
+        ];
+
+        $passwordRequirements = api_get_configuration_value('password_requirements');
+        if (!empty($passwordRequirements)) {
+            $requirements = $passwordRequirements;
+        }
+
+        return $requirements;
+    }
+
+    /**
+     * Gets password requirements in the platform language using get_lang
+     * based in platform settings. See function 'self::getPasswordRequirements'
+     * @return string
+     */
+    public static function getPasswordRequirementsToString($passedConditions = [])
+    {
+        $output = '';
+        $setting = self::getPasswordRequirements();
+        foreach ($setting as $type => $rules) {
+            foreach ($rules as $rule => $parameter) {
+                if (empty($parameter)) {
+                    continue;
+                }
+                $output .= sprintf(
+                    get_lang(
+                        'NewPasswordRequirement'.ucfirst($type).'X'.ucfirst($rule)
+                    ),
+                    $parameter
+                );
+                $output .= '<br />';
+            }
+        }
+
+        return $output;
     }
 }

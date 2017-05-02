@@ -218,7 +218,7 @@ if ($editingCourse) {
 
 if ($commissionsEnable === 'true') {
     $platformCommission = $plugin->getPlatformCommission();
-    $form->addHtml( ''
+    $form->addHtml(''
             . '<div class="form-group">'
                 . '<label for="sliders" class="col-sm-2 control-label">'
                     . get_plugin_lang('Commissions', 'BuyCoursesPlugin')
@@ -283,7 +283,7 @@ if ($form->validate()) {
         $plugin->deleteItem($productItem['id']);
     }
 
-    header('Location: ' . api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/configuration.php');
+    header('Location: '.api_get_path(WEB_PLUGIN_PATH).'buycourses/src/configuration.php');
     exit;
 }
 

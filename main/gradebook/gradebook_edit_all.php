@@ -30,14 +30,14 @@ $course_id = GradebookUtils::get_course_id_by_link_id($my_selectcat);
 
 $table_link = Database::get_main_table(TABLE_MAIN_GRADEBOOK_LINK);
 $table_evaluation = Database::get_main_table(TABLE_MAIN_GRADEBOOK_EVALUATION);
-$tbl_forum_thread = Database:: get_course_table(TABLE_FORUM_THREAD);
-$tbl_attendance = Database:: get_course_table(TABLE_ATTENDANCE);
+$tbl_forum_thread = Database::get_course_table(TABLE_FORUM_THREAD);
+$tbl_attendance = Database::get_course_table(TABLE_ATTENDANCE);
 
 $table_evaluated = GradebookUtils::getEvaluateList();
 
 $submitted = isset($_POST['submitted']) ? $_POST['submitted'] : '';
 if ($submitted == 1) {
-    Display :: display_confirmation_message(get_lang('GradebookWeightUpdated')) . '<br /><br />';
+    Display::addFlash(Display::return_message(get_lang('GradebookWeightUpdated')));
     if (isset($_POST['evaluation'])) {
         $eval_log = new Evaluation();
     }
@@ -214,7 +214,6 @@ if (!isset($_GET['exportpdf']) and !isset($_GET['export_certificate'])) {
         Display:: display_header('');
     }
 }
-
 ?>
     <div class="actions">
         <a href="<?php echo Security::remove_XSS(

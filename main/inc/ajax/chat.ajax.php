@@ -5,7 +5,7 @@
  * Responses to AJAX calls
  */
 
-$_dont_save_user_course_access  = true;
+$_dont_save_user_course_access = true;
 
 require_once __DIR__.'/../global.inc.php';
 
@@ -26,7 +26,7 @@ if (api_get_setting('allow_global_chat') == 'false') {
 }
 
 $to_user_id = isset($_REQUEST['to']) ? $_REQUEST['to'] : null;
-$message	= isset($_REQUEST['message']) ? $_REQUEST['message'] : null;
+$message = isset($_REQUEST['message']) ? $_REQUEST['message'] : null;
 
 if (!isset($_SESSION['chatHistory'])) {
     $_SESSION['chatHistory'] = array();
@@ -37,7 +37,7 @@ if (!isset($_SESSION['openChatBoxes'])) {
 }
 
 $chat = new Chat();
-if (chat::disableChat()){
+if (chat::disableChat()) {
     exit;
 }
 if ($chat->is_chat_blocked_by_exercises()) {
@@ -79,7 +79,7 @@ switch ($action) {
 
         $videoChatUrl = api_get_path(WEB_CODE_PATH) . "chat/video.php?room={$room['id']}";
         $videoChatLink = Display::url(
-            Display::returnFontAwesomeIcon('video-camera') . get_lang('StartVideoChat'),
+            Display::returnFontAwesomeIcon('video-camera').get_lang('StartVideoChat'),
             $videoChatUrl
         );
 

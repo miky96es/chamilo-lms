@@ -28,7 +28,7 @@ if (empty($id)) {
     api_not_allowed($show_headers);
 }
 
-$is_allowedToEdit = api_is_allowed_to_edit(null,true) || $is_courseTutor;
+$is_allowedToEdit = api_is_allowed_to_edit(null, true) || $is_courseTutor;
 
 // Getting results from the exe_id. This variable also contain all the information about the exercise
 $track_exercise_info = ExerciseLib::get_exercise_track_exercise_info($id);
@@ -74,15 +74,14 @@ if ($show_headers) {
 }
 
 $message = Session::read('attempt_remaining');
-if (!empty($message)) {
-    Display::display_normal_message(
-        $message,
-        false
-    );
-}
 Session::erase('attempt_remaining');
 
-ExerciseLib::display_question_list_by_attempt($objExercise, $id, false);
+ExerciseLib::display_question_list_by_attempt(
+    $objExercise,
+    $id,
+    false,
+    $message
+);
 
 if ($show_headers) {
     Display::display_footer();

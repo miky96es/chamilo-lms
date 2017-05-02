@@ -3,9 +3,9 @@
 
 set_time_limit(0);
 
-use CpChart\Classes\pCache as pCache;
-use CpChart\Classes\pData as pData;
-use CpChart\Classes\pImage as pImage;
+use CpChart\Chart\Cache as pCache;
+use CpChart\Chart\Data as pData;
+use CpChart\Chart\Image as pImage;
 
 /**
  * Class FlatViewTable
@@ -383,15 +383,15 @@ class FlatViewTable extends SortableTable
 
         // retrieve sorting type
         if ($is_western_name_order) {
-            $users_sorting = ($this->column == 0 ? FlatViewDataGenerator :: FVDG_SORT_FIRSTNAME : FlatViewDataGenerator :: FVDG_SORT_LASTNAME);
+            $users_sorting = ($this->column == 0 ? FlatViewDataGenerator::FVDG_SORT_FIRSTNAME : FlatViewDataGenerator::FVDG_SORT_LASTNAME);
         } else {
-            $users_sorting = ($this->column == 0 ? FlatViewDataGenerator :: FVDG_SORT_LASTNAME : FlatViewDataGenerator :: FVDG_SORT_FIRSTNAME);
+            $users_sorting = ($this->column == 0 ? FlatViewDataGenerator::FVDG_SORT_LASTNAME : FlatViewDataGenerator::FVDG_SORT_FIRSTNAME);
         }
 
         if ($this->direction == 'DESC') {
-            $users_sorting |= FlatViewDataGenerator :: FVDG_SORT_DESC;
+            $users_sorting |= FlatViewDataGenerator::FVDG_SORT_DESC;
         } else {
-            $users_sorting |= FlatViewDataGenerator :: FVDG_SORT_ASC;
+            $users_sorting |= FlatViewDataGenerator::FVDG_SORT_ASC;
         }
 
         // step 1: generate columns: evaluations and links

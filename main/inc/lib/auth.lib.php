@@ -104,18 +104,7 @@ class Auth
      */
     public function get_user_course_categories()
     {
-        $user_id = api_get_user_id();
-        $table_category = Database::get_main_table(TABLE_USER_COURSE_CATEGORY);
-        $sql = "SELECT * FROM " . $table_category . "
-                WHERE user_id=$user_id
-                ORDER BY sort ASC";
-        $result = Database::query($sql);
-        $output = array();
-        while ($row = Database::fetch_array($result)) {
-            $output[] = $row;
-        }
-
-        return $output;
+        return CourseManager::get_user_course_categories(api_get_user_id());
     }
 
     /**
@@ -283,65 +272,53 @@ class Auth
 
     /**
      * Moves the course one place up or down
-     * @param string    Direction up/down
-     * @param string    Category id
+     * @param string    $direction Direction up/down
+     * @param string    $category2move Category id
      * @return bool     True If it success
      */
     public function move_category($direction, $category2move)
     {
-        // the database definition of the table that stores the user defined course categories
-        $table_user_defined_category = Database::get_main_table(TABLE_USER_COURSE_CATEGORY);
+        $userId = api_get_user_id();
+        $userCategories = $this->get_user_course_categories();
+        $categories = array_values($userCategories);
 
-        $current_user_id = api_get_user_id();
-        $user_coursecategories = $this->get_user_course_categories();
-        $user_course_categories_info = $this->get_user_course_categories_info();
-        $result = false;
-
-        foreach ($user_coursecategories as $key => $category) {
+        $previous = null;
+        $target_category = [];
+        foreach ($categories as $key => $category) {
             $category_id = $category['id'];
             if ($category2move == $category_id) {
                 // source_course is the course where we clicked the up or down icon
-                $source_category = $user_course_categories_info[$category2move];
+                $source_category = $userCategories[$category2move];
                 // target_course is the course before/after the source_course (depending on the up/down icon)
                 if ($direction == 'up') {
-                    $target_category = $user_course_categories_info[$user_coursecategories[$key - 1]['id']];
+                    if (isset($categories[$key - 1])) {
+                        $target_category = $userCategories[$categories[$key - 1]['id']];
+                    }
                 } else {
-                    $target_category = $user_course_categories_info[$user_coursecategories[$key + 1]['id']];
+                    if (isset($categories[$key + 1])) {
+                        $target_category = $userCategories[$categories[$key + 1]['id']];
+                    }
                 }
             }
         }
 
+        $result = false;
         if (count($target_category) > 0 && count($source_category) > 0) {
-            $sql_update1 = "UPDATE $table_user_defined_category SET sort='" . Database::escape_string($target_category['sort']) . "'
-                            WHERE id='" . intval($source_category['id']) . "' AND user_id='" . $current_user_id . "'";
-            $sql_update2 = "UPDATE $table_user_defined_category SET sort='" . Database::escape_string($source_category['sort']) . "'
-                            WHERE id='" . intval($target_category['id']) . "' AND user_id='" . $current_user_id . "'";
-
-            $result1 = Database::query($sql_update2);
-            $result2 = Database::query($sql_update1);
-            if (Database::affected_rows($result1) && Database::affected_rows($result2)) {
+            $table = Database::get_main_table(TABLE_USER_COURSE_CATEGORY);
+            $sql = "UPDATE $table SET 
+                    sort = '" . Database::escape_string($target_category['sort']) . "'
+                    WHERE id='" . intval($source_category['id']) . "' AND user_id='" . $userId . "'";
+            $resultFirst = Database::query($sql);
+            $sql = "UPDATE $table SET 
+                    sort = '" . Database::escape_string($source_category['sort']) . "'
+                    WHERE id='" . intval($target_category['id']) . "' AND user_id='" . $userId . "'";
+            $resultSecond = Database::query($sql);
+            if (Database::affected_rows($resultFirst) && Database::affected_rows($resultSecond)) {
                 $result = true;
             }
         }
-        return $result;
-    }
 
-    /**
-     * Retrieves the user defined course categories and all the info that goes with it
-     * @return array containing all the info of the user defined courses categories with the id as key of the array
-     */
-    public function get_user_course_categories_info()
-    {
-        $current_user_id = api_get_user_id();
-        $table_category = Database::get_main_table(TABLE_USER_COURSE_CATEGORY);
-        $sql = "SELECT * FROM " . $table_category . "
-                WHERE user_id='" . $current_user_id . "'
-                ORDER BY sort ASC";
-        $result = Database::query($sql);
-        while ($row = Database::fetch_array($result)) {
-            $output[$row['id']] = $row;
-        }
-        return $output;
+        return $result;
     }
 
     /**
@@ -409,8 +386,8 @@ class Auth
     public function search_courses($search_term, $limit, $justVisible = false)
     {
         $courseTable = Database::get_main_table(TABLE_MAIN_COURSE);
-        $extraFieldTable = Database :: get_main_table(TABLE_EXTRA_FIELD);
-        $extraFieldValuesTable = Database :: get_main_table(TABLE_EXTRA_FIELD_VALUES);
+        $extraFieldTable = Database::get_main_table(TABLE_EXTRA_FIELD);
+        $extraFieldValuesTable = Database::get_main_table(TABLE_EXTRA_FIELD_VALUES);
 
         $limitFilter = CourseCategory::getLimitFilterFromArray($limit);
 
@@ -434,7 +411,7 @@ class Auth
             $without_special_courses = ' AND course.code NOT IN (' . implode(',', $special_course_list) . ')';
         }
 
-        $visibilityCondition = $justVisible ? CourseManager::getCourseVisibilitySQLCondition('course') : '';
+        $visibilityCondition = $justVisible ? CourseManager::getCourseVisibilitySQLCondition('course', true) : '';
 
         $search_term_safe = Database::escape_string($search_term);
         $sql_find = "SELECT * FROM $courseTable
@@ -638,9 +615,17 @@ class Auth
             if (CourseManager::add_user_to_course($user_id, $course_code, $status_user_in_new_course)) {
                 $send = api_get_course_setting('email_alert_to_teacher_on_new_user_in_course', $course_code);
                 if ($send == 1) {
-                    CourseManager::email_to_tutor($user_id, $all_course_information['real_id'], $send_to_tutor_also = false);
+                    CourseManager::email_to_tutor(
+                        $user_id,
+                        $all_course_information['real_id'],
+                        $send_to_tutor_also = false
+                    );
                 } else if ($send == 2) {
-                    CourseManager::email_to_tutor($user_id, $all_course_information['real_id'], $send_to_tutor_also = true);
+                    CourseManager::email_to_tutor(
+                        $user_id,
+                        $all_course_information['real_id'],
+                        $send_to_tutor_also = true
+                    );
                 }
                 $url = Display::url($all_course_information['title'], api_get_course_url($course_code));
                 $message = sprintf(get_lang('EnrollToCourseXSuccessful'), $url);
@@ -649,7 +634,9 @@ class Auth
             }
             return array('message' => $message);
         } else {
-            if (isset($_POST['course_registration_code']) && $_POST['course_registration_code'] != $all_course_information['registration_code']) {
+            if (isset($_POST['course_registration_code']) &&
+                $_POST['course_registration_code'] != $all_course_information['registration_code']
+            ) {
                 return false;
             }
             $message = get_lang('CourseRequiresPassword') . '<br />';

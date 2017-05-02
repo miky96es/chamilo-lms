@@ -2,8 +2,8 @@
 /* For licensing terms, see /license.txt */
 
 /**
- *	Interface for assigning sessions to Human Resources Manager
- *	@package chamilo.admin
+ *  Interface for assigning sessions to Human Resources Manager
+ *  @package chamilo.admin
  */
 // resetting the course id
 $cidReset = true;
@@ -88,7 +88,11 @@ function search_sessions($needle, $type)
             $return .= '<option value="'.$session['id'].'" title="'.htmlspecialchars($session['name'],ENT_QUOTES).'">'.$session['name'].'</option>';
         }
         $return .= '</select>';
-        $xajax_response->addAssign('ajax_list_sessions_multiple','innerHTML',api_utf8_encode($return));
+        $xajax_response->addAssign(
+            'ajax_list_sessions_multiple',
+            'innerHTML',
+            api_utf8_encode($return)
+        );
     }
 
     return $xajax_response;
@@ -96,8 +100,7 @@ function search_sessions($needle, $type)
 
 $xajax->processRequests();
 $htmlHeadXtra[] = $xajax->getJavascript('../inc/lib/xajax/');
-$htmlHeadXtra[] = '
-<script type="text/javascript">
+$htmlHeadXtra[] = '<script>
 function moveItem(origin , destination) {
 	for(var i = 0 ; i<origin.options.length ; i++) {
 		if(origin.options[i].selected) {
@@ -147,7 +150,7 @@ function remove_item(origin) {
 }
 </script>';
 
-$formSent=0;
+$formSent = 0;
 $firstLetterSession = isset($_POST['firstLetterSession']) ? $_POST['firstLetterSession'] : null;
 $errorMsg = '';
 $UserList = array();
@@ -175,9 +178,10 @@ if ($user_info['status'] != SESSIONADMIN) {
         Display::return_icon('add-user.png', get_lang('AssignUsers'), null, ICON_SIZE_MEDIUM ) . '</a>';
     $actionsLeft .= '<a href="dashboard_add_courses_to_user.php?user='.$user_id.'">' .
         Display::return_icon('course-add.png', get_lang('AssignCourses'), null, ICON_SIZE_MEDIUM) . '</a>';
+
+    echo Display::toolbarAction('toolbar-dashboard', array($actionsLeft));
 }
 
-echo Display::toolbarAction('toolbar-dashboard', array($actionsLeft));
 echo Display::page_header(
     sprintf(get_lang('AssignSessionsToX'), api_get_person_name($user_info['firstname'], $user_info['lastname'])),
     null,

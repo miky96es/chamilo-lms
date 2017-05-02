@@ -39,11 +39,11 @@ class TableSort
         }
 
         if ($type == SORT_REGULAR) {
-            if (TableSort::is_image_column($data, $column)) {
+            if (self::is_image_column($data, $column)) {
                 $type = SORT_IMAGE;
-            } elseif (TableSort::is_date_column($data, $column)) {
+            } elseif (self::is_date_column($data, $column)) {
                 $type = SORT_DATE;
-            } elseif (TableSort::is_numeric_column($data, $column)) {
+            } elseif (self::is_numeric_column($data, $column)) {
                 $type = SORT_NUMERIC;
             } else {
                 $type = SORT_STRING;
@@ -71,7 +71,7 @@ class TableSort
         usort($data, create_function('$a, $b', $compare_function));
 
         return $data;
-	}
+    }
 
 	/**
 	 * Sorts 2-dimensional table. It is possile changing the columns that will be shown and the way that the columns are to be sorted.
@@ -114,11 +114,11 @@ class TableSort
         }
 
         if ($type == SORT_REGULAR) {
-            if (TableSort::is_image_column($data, $column)) {
+            if (self::is_image_column($data, $column)) {
                 $type = SORT_IMAGE;
-            } elseif (TableSort::is_date_column($data, $column)) {
+            } elseif (self::is_date_column($data, $column)) {
                 $type = SORT_DATE;
-            } elseif (TableSort::is_numeric_column($data, $column)) {
+            } elseif (self::is_numeric_column($data, $column)) {
                 $type = SORT_NUMERIC;
             } else {
                 $type = SORT_STRING;
@@ -157,7 +157,7 @@ class TableSort
 
                 $new_data_order = array();
                 if (!empty($docs_to_sort)) {
-                    foreach($docs_to_sort as $id => $document) {
+                    foreach ($docs_to_sort as $id => $document) {
                         if (isset($new_data[$id])) {
                             $new_data_order[] = $new_data[$id];
                         }
@@ -165,7 +165,7 @@ class TableSort
                 }
 
                 if (!empty($folder_to_sort)) {
-                    foreach($folder_to_sort as $id => $document) {
+                    foreach ($folder_to_sort as $id => $document) {
                         if (isset($new_data[$id])) {
                             $new_data_order[] = $new_data[$id];
                         }

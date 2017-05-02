@@ -108,10 +108,8 @@ class LearnpathList
                     $order
                 ";
 
-        $learningPaths = Database::getManager()
-            ->createQuery($dql)
-            ->getResult();
-
+        $learningPaths = Database::getManager()->createQuery($dql)->getResult();
+        $showBlockedPrerequisite = api_get_configuration_value('show_prerequisite_as_blocked');
         $names = [];
         /** @var CLp $row */
         foreach ($learningPaths as $row) {
@@ -119,35 +117,47 @@ class LearnpathList
             // it prevents ' to be slashed and the input (done by learnpath.class.php::toggle_visibility())
             // is done using domesticate()
             $name = domesticate($row->getName());
-            $link = 'lp/lp_controller.php?action=view&lp_id=' . $row->getIid() . '&id_session='.$session_id;
-            $oldLink = 'newscorm/lp_controller.php?action=view&lp_id=' . $row->getIid() . '&id_session='.$session_id;
+            $link = 'lp/lp_controller.php?action=view&lp_id='.$row->getId().'&id_session='.$session_id;
+            $oldLink = 'newscorm/lp_controller.php?action=view&lp_id='.$row->getId().'&id_session='.$session_id;
 
             $sql2 = "SELECT * FROM $tbl_tool
                      WHERE
-                        c_id = $course_id AND (
-                            name='$name' AND
-                            image='scormbuilder.gif' AND
-                            (
-                                link LIKE '$link%' OR
-                                link LIKE '$oldLink%'                                
-                            )
-                      )";
-
+                        c_id = $course_id AND 
+                        name = '$name' AND
+                        image = 'scormbuilder.gif' AND
+                        (
+                            link LIKE '$link%' OR
+                            link LIKE '$oldLink%'                                
+                        )
+                      ";
             $res2 = Database::query($sql2);
             if (Database::num_rows($res2) > 0) {
                 $row2 = Database::fetch_array($res2);
                 $pub = $row2['visibility'];
+
             } else {
                 $pub = 'i';
             }
 
             // Check if visible.
-            $vis = api_get_item_visibility(
+            $visibility = api_get_item_visibility(
                 api_get_course_info($course_code),
                 'learnpath',
                 $row->getId(),
                 $session_id
             );
+
+            // If option is not true then don't show invisible LP to user
+            if ($showBlockedPrerequisite !== true && !api_is_allowed_to_edit()) {
+                $lpVisibility = learnpath::is_lp_visible_for_student(
+                    $row->getId(),
+                    $user_id,
+                    $course_code
+                );
+                if ($lpVisibility === false) {
+                    continue;
+                }
+            }
 
             $this->list[$row->getIid()] = array(
                 'lp_type' => $row->getLpType(),
@@ -160,7 +170,7 @@ class LearnpathList
                 'lp_maker' => stripslashes($row->getContentMaker()),
                 'lp_proximity' => $row->getContentLocal(),
                 'lp_encoding' => api_get_system_encoding(),
-                'lp_visibility' => $vis,
+                'lp_visibility' => $visibility,
                 'lp_published' => $pub,
                 'lp_prevent_reinit' => $row->getPreventReinit(),
                 'seriousgame_mode' => $row->getSeriousgameMode(),
@@ -176,6 +186,7 @@ class LearnpathList
                 //'category_id'       => $row['category_id'],
                 'subscribe_users' => $row->getSubscribeUsers(),
                 'lp_old_id' => $row->getId(),
+                'iid' => $row->getIid(),
                 'prerequisite' => $row->getPrerequisite()
             );
             $names[$row->getName()] = $row->getIid();
@@ -225,7 +236,7 @@ class LearnpathList
 
         $lessons = array();
         while ($row = Database::fetch_array($result)) {
-            if (api_get_item_visibility($course, 'learnpath', $row['id'],  $session_id)) {
+            if (api_get_item_visibility($course, 'learnpath', $row['id'], $session_id)) {
                 $lessons[$row['id']] = $row;
             }
         }

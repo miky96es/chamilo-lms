@@ -25,11 +25,10 @@ $allowedFields = [
 ];
 
 $allowedFieldsConfiguration = api_get_configuration_value('allow_fields_inscription');
-
 if ($allowedFieldsConfiguration !== false) {
-    $allowedFields = $allowedFieldsConfiguration;
+    $allowedFields = isset($allowedFieldsConfiguration['fields']) ? $allowedFieldsConfiguration['fields'] : [];
+    $allowedFields['extra_fields'] = isset($allowedFieldsConfiguration['extra_fields']) ? $allowedFieldsConfiguration['extra_fields'] : [];
 }
-
 $gMapsPlugin = GoogleMapsPlugin::create();
 $geolocalization = $gMapsPlugin->get('enable_api') === 'true';
 
@@ -60,6 +59,20 @@ $form = new FormValidator('registration');
 $user_already_registered_show_terms = false;
 if (api_get_setting('allow_terms_conditions') == 'true') {
     $user_already_registered_show_terms = isset($_SESSION['term_and_condition']['user_id']);
+}
+
+$sessionPremiumChecker = Session::read('SessionIsPremium');
+$sessionId = Session::read('sessionId');
+
+// Direct Link Session Subscription feature #12220
+$sessionRedirect = isset($_REQUEST['s']) && !empty($_REQUEST['s']) ? $_REQUEST['s'] : null;
+$onlyOneCourseSessionRedirect = isset($_REQUEST['cr']) && !empty($_REQUEST['cr']) ? $_REQUEST['cr'] : null;
+
+if (api_get_configuration_value('allow_redirect_to_session_after_inscription_about')) {
+    if (!empty($sessionRedirect)) {
+        Session::write('session_redirect', $sessionRedirect);
+        Session::write('only_one_course_session_redirect', $onlyOneCourseSessionRedirect);
+    }
 }
 
 // Direct Link Subscription feature #5299
@@ -129,6 +142,7 @@ if ($user_already_registered_show_terms === false) {
         $form->addText(
             'username',
             get_lang('UserName'),
+            true,
             array(
                 'id' => 'username',
                 'size' => USERNAME_MAX_LENGTH,
@@ -164,15 +178,7 @@ if ($user_already_registered_show_terms === false) {
     $form->addRule('pass1', get_lang('ThisFieldIsRequired'), 'required');
     $form->addRule('pass2', get_lang('ThisFieldIsRequired'), 'required');
     $form->addRule(array('pass1', 'pass2'), get_lang('PassTwo'), 'compare');
-
-    if (CHECK_PASS_EASY_TO_FIND) {
-        $form->addRule(
-            'pass1',
-            get_lang('PassTooEasy') . ': ' . api_generate_password(),
-            'callback',
-            'api_check_password'
-        );
-    }
+    $form->addPasswordRule('pass1');
 
     // PHONE
     if (in_array('phone', $allowedFields)) {
@@ -194,8 +200,7 @@ if ($user_already_registered_show_terms === false) {
     // Language
     if (in_array('language', $allowedFields)) {
         if (api_get_setting('registration', 'language') == 'true') {
-            $form->addElement(
-                'select_language',
+            $form->addSelectLanguage(
                 'language',
                 get_lang('Language')
             );
@@ -240,7 +245,12 @@ if ($user_already_registered_show_terms === false) {
             )
         );
 
-        $captcha_question =  $form->addElement('CAPTCHA_Image', 'captcha_question', '', $options);
+        $captcha_question = $form->addElement(
+            'CAPTCHA_Image',
+            'captcha_question',
+            '',
+            $options
+        );
         $form->addElement('static', null, null, get_lang('ClickOnTheImageForANewOne'));
 
         $form->addElement('text', 'captcha', get_lang('EnterTheLettersYouSee'), array('size' => 40));
@@ -318,11 +328,19 @@ if ($user_already_registered_show_terms === false) {
     }
 
     // EXTRA FIELDS
-    if (array_key_exists('extra_fields', $allowedFields) || in_array('extra_fields', $allowedFields)) {
+    if (array_key_exists('extra_fields', $allowedFields) ||
+        in_array('extra_fields', $allowedFields)
+    ) {
         $extraField = new ExtraField('user');
-
         $extraFieldList = isset($allowedFields['extra_fields']) && is_array($allowedFields['extra_fields']) ? $allowedFields['extra_fields'] : [];
-        $returnParams = $extraField->addElements($form, 0, [], false, false, $extraFieldList);
+        $returnParams = $extraField->addElements(
+            $form,
+            0,
+            [],
+            false,
+            false,
+            $extraFieldList
+        );
     }
 }
 if (isset($_SESSION['user_language_choice']) && $_SESSION['user_language_choice'] != '') {
@@ -349,9 +367,7 @@ $defaults['status'] = STUDENT;
 $defaults['extra_mail_notify_invitation'] = 1;
 $defaults['extra_mail_notify_message'] = 1;
 $defaults['extra_mail_notify_group_message'] = 1;
-
 $form->setDefaults($defaults);
-
 $content = null;
 
 if (!CustomPages::enabled()) {
@@ -429,7 +445,6 @@ if (!CustomPages::enabled()) {
 
 // Terms and conditions
 if (api_get_setting('allow_terms_conditions') == 'true') {
-
     if (!api_is_platform_admin()) {
         if (api_get_setting('show_terms_if_profile_completed') === 'true') {
             $userInfo = api_get_user_info();
@@ -479,6 +494,7 @@ if (api_get_setting('allow_terms_conditions') == 'true') {
 $form->addButtonCreate(get_lang('RegisterUser'));
 
 $course_code_redirect = Session::read('course_redirect');
+$sessionToRedirect = Session::read('session_redirect');
 
 if ($form->validate()) {
     $values = $form->getSubmitValues(1);
@@ -618,6 +634,19 @@ if ($form->validate()) {
                 Database::query($sql);
             }
 
+            // Saving user to Session if it was set
+            if (!empty($sessionToRedirect) && !$sessionPremiumChecker) {
+                $sessionInfo = api_get_session_info($sessionToRedirect);
+                if (!empty($sessionInfo)) {
+                    SessionManager::subscribe_users_to_session(
+                        $sessionToRedirect,
+                        [$user_id],
+                        SESSION_VISIBLE_READ_ONLY,
+                        false
+                    );
+                }
+            }
+
             // Saving user to course if it was set.
             if (!empty($course_code_redirect)) {
                 $course_info = api_get_course_info($course_code_redirect);
@@ -704,7 +733,11 @@ if ($form->validate()) {
             if (!empty($cond_array[0]) && !empty($cond_array[1])) {
                 $time = time();
                 $condition_to_save = intval($cond_array[0]).':'.intval($cond_array[1]).':'.$time;
-                UserManager::update_extra_field_value($user_id, 'legal_accept', $condition_to_save);
+                UserManager::update_extra_field_value(
+                    $user_id,
+                    'legal_accept',
+                    $condition_to_save
+                );
 
                 $bossList = UserManager::getStudentBossList($user_id);
                 if ($bossList) {
@@ -829,6 +862,21 @@ if ($form->validate()) {
         }
     }
 
+    if ($sessionPremiumChecker && $sessionId) {
+        header('Location:' . api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/process.php?i=' . $sessionId . '&t=2');
+        Session::erase('SessionIsPremium');
+        Session::erase('sessionId');
+        exit;
+    }
+
+    SessionManager::redirectToSession();
+
+    $redirectBuyCourse = Session::read('buy_course_redirect');
+    if (!empty($redirectBuyCourse)) {
+        $form_data['action'] = api_get_path(WEB_PATH).$redirectBuyCourse;
+        Session::erase('buy_course_redirect');
+    }
+
     $form_data = CourseManager::redirectToCourse($form_data);
 
     $form_register = new FormValidator('form_register', 'post', $form_data['action']);
@@ -847,6 +895,8 @@ if ($form->validate()) {
     // Just in case
     Session::erase('course_redirect');
     Session::erase('exercise_redirect');
+    Session::erase('session_redirect');
+    Session::erase('only_one_course_session_redirect');
 
     if (CustomPages::enabled()) {
         CustomPages::display(
@@ -865,7 +915,8 @@ if ($form->validate()) {
     // Custom pages
     if (CustomPages::enabled()) {
         CustomPages::display(
-            CustomPages::REGISTRATION, array('form' => $form)
+            CustomPages::REGISTRATION,
+            array('form' => $form)
         );
     } else {
         if (!api_is_anonymous()) {

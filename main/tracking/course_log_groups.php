@@ -23,9 +23,10 @@ if (!$is_allowedToTrack) {
 
 $course_id = api_get_course_int_id();
 $course_code = api_get_course_id();
+$sessionId = api_get_session_id();
 
 // jqgrid will use this URL to do the selects
-$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_group_reporting&course_id='.$course_id;
+$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_group_reporting&course_id='.$course_id.'&session_id='.$sessionId;
 
 // The order is important you need to check the the $column variable in the model.ajax.php file
 $columns = array(
@@ -98,7 +99,7 @@ $extra_params['height'] = 'auto';
 
 $action_links = '
 function action_formatter(cellvalue, options, rowObject) {
-    return \'<a href="course_log_tools.php?id_session=0&cidReq='.$course_code.'&gidReq=\'+options.rowId+\'">'.Display::return_icon('2rightarrow.png',get_lang('Edit'),'',ICON_SIZE_SMALL).'</a>'.
+    return \'<a href="course_log_tools.php?id_session=0&cidReq='.$course_code.'&gidReq=\'+options.rowId+\'">'.Display::return_icon('2rightarrow.png', get_lang('Edit'), '', ICON_SIZE_SMALL).'</a>'.
     '\';
 }';
 
@@ -108,7 +109,7 @@ $htmlHeadXtra[] = api_get_jqgrid_js();
 $htmlHeadXtra[] = '
 <script>
 $(function() {
-    '.Display::grid_js('group_users',$url, $columns, $column_model, $extra_params, array(), $action_links, true).'
+    '.Display::grid_js('group_users', $url, $columns, $column_model, $extra_params, array(), $action_links, true).'
 });
 </script>';
 

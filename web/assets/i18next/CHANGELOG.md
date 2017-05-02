@@ -1,3 +1,75 @@
+### 8.0.0
+- nonExplicitWhitelist flag now not only gets considered on a fallback lng but also on user language. Eg. userlng 'de-AT' and whitelist ['de'] will now let de-AT pass as whitelisted if nonExplicitWhitelist is set true.
+
+### 7.2.3
+- rebuild seems we had a mistake in pushing latest build
+
+### 7.2.2
+- fixes issue in accepting string as a result of "nested" lookup [PR909](https://github.com/i18next/i18next/pull/909)
+
+### 7.2.1
+- fixes iterating over object's own properties [#904](https://github.com/i18next/i18next/pull/904)
+
+### 7.2.0
+- new init option simplifyPluralSuffix - setting it to false will treat all plurals using suffix numbers even for locals only having singular and plural
+- even if no lng set or detected at least load the fallback languages
+- delay init call on createInstance if not set initImmediate to false [#879](https://github.com/i18next/i18next/issues/879)
+
+### 7.1.3
+- fixes issue in returnObject tree called with options including ns: [react-i18next #240](https://github.com/i18next/react-i18next/issues/240)
+
+### 7.1.2
+- remove regex escape from format separators [#896](https://github.com/i18next/i18next/pull/896)
+
+### 7.1.1
+- change to named plugins for 3rd party - just calling init
+
+### 7.1.0
+- add option to include plugins not directly related - they get called their init function with current instance of i18next on init
+
+### 7.0.1
+- fix issue in fallback lng detection if no code was detected
+- check for having a lng in append when searching locals to load on loadResources - avoid error on express middleware
+
+### 7.0.0
+- [BREAKING] Removed special cases for norwegian which resolved nb-NO to nb-NO, no will now resolve to nb-NO, nb [#870](https://github.com/i18next/i18next/issues/870) using norwegian you could migrate to old behaviour like:
+
+    fallbackLng: {
+      'nb': ['no', 'en'],
+      'nn': ['no', 'en'],
+      'default': ['en']
+    }
+
+- adding exports for named import (destruction es6) [#873](https://github.com/i18next/i18next/issues/873)
+- change entry point for umd build to /src/i18next to avoid mixed export
+- replace cloning in interpolation nesting to use object assign instead of json.stringify/parse so circular structures can be used [#875](https://github.com/i18next/i18next/issues/875)
+- update all build dependencies
+
+### 6.1.2
+- fixes fix in 6.1.1
+
+### 6.1.1
+- patching same separators to lookup if the ns exists - else guess the first item is just part of the key and not meant as a namespace
+
+### 6.1.0
+- you now can use same nsSeparator and keySeparator (eg. use a dot for both)
+
+### 6.0.3
+- do not loop over objectTree if keySeparator is set to false
+
+### 6.0.2
+- fixes init flow of clone
+
+### 6.0.1
+- fixes issue in event emitter, assert all emitters get called even if one called get removed and changes the array index
+
+### 6.0.0
+- Return namespace in cimode with appendNamespaceToCIMode option (default now will only return key without namespace - independent of call to t function) [#863](https://github.com/i18next/i18next/issues/863)
+
+### 5.0.0
+- Nested keys should not be escaped by default [#854](https://github.com/i18next/i18next/issues/854)
+- Make sure i18next.init() runs for i18next.cloneInstance() [#860](https://github.com/i18next/i18next/pull/860)
+
 ### 4.2.0
 - adds i18next.isInitialized when isInitialized
 - triggers backend loaded event before initialized

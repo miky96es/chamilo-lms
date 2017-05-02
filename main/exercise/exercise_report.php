@@ -36,11 +36,10 @@ $path = isset($_GET['path']) ? Security::remove_XSS($_GET['path']) : null;
 $is_allowedToEdit = api_is_allowed_to_edit(null, true) || api_is_drh() || api_is_student_boss();
 $is_tutor = api_is_allowed_to_edit(true);
 
-$TBL_QUESTIONS = Database :: get_course_table(TABLE_QUIZ_QUESTION);
-$TBL_TRACK_EXERCISES = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
-$TBL_TRACK_ATTEMPT = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT);
-$TBL_TRACK_ATTEMPT_RECORDING = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT_RECORDING);
-$TBL_LP_ITEM_VIEW = Database :: get_course_table(TABLE_LP_ITEM_VIEW);
+$TBL_TRACK_EXERCISES = Database::get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
+$TBL_TRACK_ATTEMPT = Database::get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT);
+$TBL_TRACK_ATTEMPT_RECORDING = Database::get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT_RECORDING);
+$TBL_LP_ITEM_VIEW = Database::get_course_table(TABLE_LP_ITEM_VIEW);
 
 $allowCoachFeedbackExercises = api_get_setting('allow_coach_feedback_exercises') === 'true';
 
@@ -127,7 +126,7 @@ if (isset($_REQUEST['comments']) &&
     $_REQUEST['comments'] == 'update' &&
     ($is_allowedToEdit || $is_tutor || $allowCoachFeedbackExercises)
 ) {
-    //filtered by post-condition
+    // Filtered by post-condition
     $id = intval($_GET['exeid']);
     $track_exercise_info = ExerciseLib::get_exercise_track_exercise_info($id);
 
@@ -140,17 +139,7 @@ if (isset($_REQUEST['comments']) &&
     $lp_id = $track_exercise_info['orig_lp_id'];
     $lp_item_view_id = $track_exercise_info['orig_lp_item_view_id'];
     $exerciseId = $track_exercise_info['exe_exo_id'];
-
     $course_info = api_get_course_info();
-
-    // Teacher data
-    $teacher_info = api_get_user_info(api_get_user_id());
-    $from_name = api_get_person_name(
-        $teacher_info['firstname'],
-        $teacher_info['lastname'],
-        null,
-        PERSON_NAME_EMAIL_ADDRESS
-    );
     $url = api_get_path(WEB_CODE_PATH).'exercise/result.php?id='.$track_exercise_info['exe_id'].'&'.api_get_cidreq().'&show_headers=1&id_session='.$session_id;
 
     $my_post_info = array();
@@ -159,7 +148,9 @@ if (isset($_REQUEST['comments']) &&
 
     foreach ($_POST as $key_index => $key_value) {
         $my_post_info = explode('_', $key_index);
+
         $post_content_id[] = $my_post_info[1];
+
         if ($my_post_info[0] == 'comments') {
             $comments_exist = true;
         }
@@ -223,20 +214,8 @@ if (isset($_REQUEST['comments']) &&
     if (isset($_POST['send_notification'])) {
         //@todo move this somewhere else
         $subject = get_lang('ExamSheetVCC');
+        $message = isset($_POST['notification_content']) ? $_POST['notification_content'] : '';
 
-        $message = '<p>'.get_lang('DearStudentEmailIntroduction').'</p><p>'.get_lang('AttemptVCC');
-        $message .= '<h3>'.get_lang('CourseName').'</h3><p>'.Security::remove_XSS($course_info['name']).'';
-        $message .= '<h3>'.get_lang('Exercise').'</h3><p>'.Security::remove_XSS($test);
-
-        // Only for exercises not in a LP
-        if ($lp_id == 0) {
-            $message .= '<p>'.get_lang('ClickLinkToViewComment').' <br /><a href="#url#">#url#</a><br />';
-        }
-
-        $message .= '<p>'.get_lang('Regards').'</p>';
-        $message .= $from_name;
-        $message = str_replace("#test#", Security::remove_XSS($test), $message);
-        $message = str_replace("#url#", $url, $message);
         MessageManager::send_message_simple(
             $student_id,
             $subject,
@@ -248,7 +227,7 @@ if (isset($_REQUEST['comments']) &&
             Display::addFlash(
                 Display::return_message(get_lang('MessageSent'))
             );
-            header('Location: ' . api_get_self().'?'.api_get_cidreq().'&exerciseId='.$exerciseId);
+            header('Location: '.api_get_self().'?'.api_get_cidreq().'&exerciseId='.$exerciseId);
             exit;
         }
     }
@@ -256,12 +235,13 @@ if (isset($_REQUEST['comments']) &&
     // Updating LP score here
     if (in_array($origin, array('tracking_course', 'user_course', 'correct_exercise_in_lp'))
     ) {
-        $sql = "UPDATE $TBL_LP_ITEM_VIEW SET score = '".floatval($tot)."'
+        $sql = "UPDATE $TBL_LP_ITEM_VIEW 
+                SET score = '".floatval($tot)."'
                 WHERE c_id = ".$course_id." AND id = ".$lp_item_view_id;
         Database::query($sql);
         if ($origin == 'tracking_course') {
             //Redirect to the course detail in lp
-            header('location: '.api_get_path(WEB_CODE_PATH).'exercise/exercise.php?course='.Security :: remove_XSS($_GET['course']));
+            header('location: '.api_get_path(WEB_CODE_PATH).'exercise/exercise.php?course='.Security::remove_XSS($_GET['course']));
             exit;
         } else {
             // Redirect to the reporting
@@ -277,9 +257,9 @@ if ($is_allowedToEdit && $origin != 'learnpath') {
     if (api_is_platform_admin() || api_is_course_admin() ||
         api_is_course_tutor() || api_is_course_coach()
     ) {
-        $actions .= '<a href="admin.php?exerciseId='.intval($_GET['exerciseId']).'">'.Display :: return_icon('back.png', get_lang('GoBackToQuestionList'), '', ICON_SIZE_MEDIUM).'</a>';
-        $actions .='<a href="live_stats.php?'.api_get_cidreq().'&exerciseId='.$exercise_id.'">'.Display :: return_icon('activity_monitor.png', get_lang('LiveResults'), '', ICON_SIZE_MEDIUM).'</a>';
-        $actions .='<a href="stats.php?'.api_get_cidreq().'&exerciseId='.$exercise_id.'">'.Display :: return_icon('statistics.png', get_lang('ReportByQuestion'), '', ICON_SIZE_MEDIUM).'</a>';
+        $actions .= '<a href="admin.php?exerciseId='.intval($_GET['exerciseId']).'">'.Display::return_icon('back.png', get_lang('GoBackToQuestionList'), '', ICON_SIZE_MEDIUM).'</a>';
+        $actions .= '<a href="live_stats.php?'.api_get_cidreq().'&exerciseId='.$exercise_id.'">'.Display::return_icon('activity_monitor.png', get_lang('LiveResults'), '', ICON_SIZE_MEDIUM).'</a>';
+        $actions .= '<a href="stats.php?'.api_get_cidreq().'&exerciseId='.$exercise_id.'">'.Display::return_icon('statistics.png', get_lang('ReportByQuestion'), '', ICON_SIZE_MEDIUM).'</a>';
 
         $actions .= '<a id="export_opener" href="'.api_get_self().'?export_report=1&exerciseId='.intval($_GET['exerciseId']).'" >'.
         Display::return_icon('save.png', get_lang('Export'), '', ICON_SIZE_MEDIUM).'</a>';
@@ -300,7 +280,9 @@ if ($is_allowedToEdit && $origin != 'learnpath') {
         );
     }
 } else {
-    $actions .= '<a href="exercise.php">'.Display :: return_icon('back.png', get_lang('GoBackToQuestionList'), '', ICON_SIZE_MEDIUM).'</a>';
+    $actions .= '<a href="exercise.php">'.
+        Display::return_icon('back.png', get_lang('GoBackToQuestionList'), '', ICON_SIZE_MEDIUM).
+    '</a>';
 }
 
 //Deleting an attempt
@@ -335,10 +317,22 @@ if ($is_allowedToEdit || $is_tutor) {
     }
 }
 
+if (($is_allowedToEdit || $is_tutor || api_is_coach()) &&
+    isset($_GET['a']) && $_GET['a'] == 'close' &&
+    !empty($_GET['id']) && $locked == false
+) {
+    // Close the user attempt otherwise left pending
+    $exe_id = intval($_GET['id']);
+    $sql = "UPDATE $TBL_TRACK_EXERCISES SET status = '' WHERE exe_id = $exe_id AND status = 'incomplete'";
+    Database::query($sql);
+}
+
 Display :: display_header($nameTools);
 
 // Clean all results for this test before the selected date
-if (($is_allowedToEdit || $is_tutor || api_is_coach()) && isset($_GET['delete_before_date']) && $locked == false) {
+if (($is_allowedToEdit || $is_tutor || api_is_coach()) &&
+    isset($_GET['delete_before_date']) && $locked == false
+) {
     // ask for the date
     $check = Security::check_token('get');
     if ($check) {
@@ -398,24 +392,23 @@ $form->addElement('radio', 'export_format', null, get_lang('ExportAsXLS'), 'xls'
 $form->addElement('checkbox', 'load_extra_data', null, get_lang('LoadExtraData'), '0', array('id' => 'export_format_xls_label'));
 $form->addElement('checkbox', 'include_all_users', null, get_lang('IncludeAllUsers'), '0');
 $form->addElement('checkbox', 'only_best_attempts', null, get_lang('OnlyBestAttempts'), '0');
-
 $form->setDefaults(array('export_format' => 'csv'));
-$extra .= $form->return_form();
+$extra .= $form->returnForm();
 $extra .= '</div>';
 
-if ($is_allowedToEdit)
+if ($is_allowedToEdit) {
     echo $extra;
+}
 
 echo $actions;
-
-$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_exercise_results&exerciseId='.$exercise_id.'&filter_by_user='.$filter_user;
-
+$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_exercise_results&exerciseId='.$exercise_id.'&filter_by_user='.$filter_user.'&'.api_get_cidreq();
 $action_links = '';
-
-//Generating group list
-
+// Generating group list
 $group_list = GroupManager::get_group_list();
-$group_parameters = array('group_all:'.get_lang('All'), 'group_none:'.get_lang('None'));
+$group_parameters = array(
+    'group_all:'.get_lang('All'),
+    'group_none:'.get_lang('None'),
+);
 
 foreach ($group_list as $group) {
     $group_parameters[] = $group['id'].':'.$group['name'];
@@ -427,9 +420,7 @@ if (!empty($group_parameters)) {
 $officialCodeInList = api_get_setting('show_official_code_exercise_result_list');
 
 if ($is_allowedToEdit || $is_tutor) {
-
     // The order is important you need to check the the $column variable in the model.ajax.php file
-
     $columns = array(
         get_lang('FirstName'),
         get_lang('LastName'),
@@ -544,7 +535,16 @@ $extra_params['height'] = 'auto';
 
     $(function() {
         <?php
-        echo Display::grid_js('results', $url, $columns, $column_model, $extra_params, array(), $action_links, true);
+        echo Display::grid_js(
+            'results',
+            $url,
+            $columns,
+            $column_model,
+            $extra_params,
+            array(),
+            $action_links,
+            true
+        );
 
         if ($is_allowedToEdit || $is_tutor) {
             ?>
@@ -590,13 +590,10 @@ $extra_params['height'] = 'auto';
 
                 $('#results').on('click', 'a.exercise-recalculate', function (e) {
                     e.preventDefault();
-
                     if (!$(this).data('user') || !$(this).data('exercise') || !$(this).data('id')) {
                         return;
                     }
-
                     var url = '<?php echo api_get_path(WEB_CODE_PATH) ?>exercise/recalculate.php?<?php echo api_get_cidreq() ?>';
-
                     var recalculateXhr = $.post(url, $(this).data());
 
                     $.when(recalculateXhr).done(function (response) {

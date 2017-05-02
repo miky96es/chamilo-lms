@@ -26,12 +26,12 @@
     "bower_components",
     "tests"
   ],
-  "version": "3.1.5",
-  "_release": "3.1.5",
+  "version": "3.1.7",
+  "_release": "3.1.7",
   "_resolution": {
     "type": "version",
-    "tag": "v3.1.5",
-    "commit": "d4e536743709ea99d6df4ddc7d3f352023340e34"
+    "tag": "v3.1.7",
+    "commit": "1be694c5a18dbd4b2dee8cada2c220a8cd557915"
   },
   "_source": "https://github.com/mervick/emojionearea.git",
   "_target": "3.1.*",

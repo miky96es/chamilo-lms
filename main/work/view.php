@@ -2,7 +2,7 @@
 /* For licensing terms, see /license.txt */
 
 require_once __DIR__.'/../inc/global.inc.php';
-$current_course_tool  = TOOL_STUDENTPUBLICATION;
+$current_course_tool = TOOL_STUDENTPUBLICATION;
 
 require_once 'work.lib.php';
 
@@ -52,7 +52,7 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
     $userInfo = api_get_user_info($work['user_id']);
     $interbreadcrumb[] = array('url' => $url_dir, 'name' => $my_folder_data['title']);
     $interbreadcrumb[] = array('url' => '#', 'name' => $userInfo['complete_name']);
-    $interbreadcrumb[] = array('url' => '#','name' => $work['title']);
+    $interbreadcrumb[] = array('url' => '#', 'name' => $work['title']);
 
     if (($courseInfo['show_score'] == 0 &&
         $work['active'] == 1 &&
@@ -73,8 +73,8 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
 
         switch ($action) {
             case 'send_comment':
-                if (isset($_FILES["file"])) {
-                    $_POST['file'] = $_FILES["file"];
+                if (isset($_FILES['attachment'])) {
+                    $_POST['attachment'] = $_FILES['attachment'];
                 }
 
                 addWorkComment(
@@ -85,7 +85,44 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                     $_POST
                 );
 
-                Display::addFlash(Display::return_message(get_lang('CommentCreated')));
+                if (api_is_allowed_to_edit()) {
+                    $work_table = Database::get_course_table(TABLE_STUDENT_PUBLICATION);
+                    $sql = "UPDATE $work_table 
+                            SET	
+                                qualificator_id = '".api_get_user_id()."',
+                                qualification = '".api_float_val($_POST['qualification'])."',
+                                date_of_qualification = '".api_get_utc_datetime()."'
+                            WHERE c_id = ".$courseInfo['real_id']." AND id = $id";
+                    Database::query($sql);
+
+                    Display::addFlash(Display::return_message(get_lang('Updated')));
+
+                    $resultUpload = uploadWork(
+                        $my_folder_data,
+                        $courseInfo,
+                        true,
+                        $work
+                    );
+                    if ($resultUpload) {
+                        $work_table = Database::get_course_table(
+                            TABLE_STUDENT_PUBLICATION
+                        );
+
+                        if (isset($resultUpload['url']) && !empty($resultUpload['url'])) {
+                            $title = isset($resultUpload['filename']) && !empty($resultUpload['filename']) ? $resultUpload['filename'] : get_lang('Untitled');
+                            $urlToSave = Database::escape_string($resultUpload['url']);
+                            $title = Database::escape_string($title);
+                            $sql = "UPDATE $work_table SET
+                                        url_correction = '".$urlToSave."',
+                                        title_correction = '".$title."'
+                                    WHERE iid = ".$work['iid'];
+                            Database::query($sql);
+                            Display::addFlash(
+                                Display::return_message(get_lang('FileUploadSucces'))
+                            );
+                        }
+                    }
+                }
 
                 header('Location: '.$url);
                 exit;
@@ -116,17 +153,16 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
         }
 
         $comments = getWorkComments($work);
-        $commentForm = getWorkCommentForm($work);
+        $commentForm = getWorkCommentForm($work, $my_folder_data);
 
         $tpl = new Template();
 
         $tpl->assign('work', $work);
         $tpl->assign('comments', $comments);
 
-        $actions = '';
         if (isset($work['contains_file'])) {
             if (isset($work['download_url'])) {
-                $actions .= Display::url(
+                $actions = Display::url(
                     Display::return_icon(
                         'save.png',
                         get_lang('Download'),
@@ -158,10 +194,14 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                         );
                     }
                 }
+
+                $tpl->assign(
+                    'actions',
+                    Display::toolbarAction('toolbar', [$actions])
+                );
             }
         }
 
-        $tpl->assign('actions', $actions);
         if (api_is_allowed_to_session_edit()) {
             $tpl->assign('form', $commentForm);
         }

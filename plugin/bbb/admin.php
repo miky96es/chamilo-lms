@@ -9,7 +9,7 @@ use Chamilo\UserBundle\Entity\User;
 $course_plugin = 'bbb'; //needed in order to load the plugin lang variables
 $cidReset = true;
 
-require_once __DIR__ . '/../../main/inc/global.inc.php';
+require_once __DIR__.'/../../main/inc/global.inc.php';
 
 api_protect_admin_script();
 
@@ -51,7 +51,7 @@ foreach ($meetings as &$meeting) {
         /** @var User $participant */
         $participant = $meetingParticipant['participant'];
         $meeting['participants'][] = $participant->getCompleteName()
-            . ' (' . $participant->getEmail() . ')';
+            . ' ('.$participant->getEmail().')';
     }
 }
 

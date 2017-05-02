@@ -8,7 +8,10 @@
  * @package chamilo.plugin.advanced_subscription
 */
 
-require_once dirname(__FILE__) . '/config.php';
+/**
+ * Queries
+ */
+require_once __DIR__.'/config.php';
 if (!api_is_platform_admin()) {
     die ('You must have admin permissions to uninstall plugins');
 }

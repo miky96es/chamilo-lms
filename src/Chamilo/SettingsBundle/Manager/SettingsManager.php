@@ -246,7 +246,7 @@ class SettingsManager implements SettingsManagerInterface
             'youtube_for_students' => 'Editor',
             'block_copy_paste_for_students' => 'Editor',
             'more_buttons_maximized_mode' => 'Editor',
-            'students_download_folders' => 'Tools',
+            'students_download_folders' => 'Document',
             'users_copy_files' => 'Tools',
             'allow_students_to_create_groups_in_social' => 'Tools',
             'allow_send_message_to_all_platform_users' => 'Tools',

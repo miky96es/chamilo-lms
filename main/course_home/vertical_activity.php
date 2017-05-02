@@ -90,10 +90,10 @@ if (api_is_allowed_to_edit(null, true) && !api_is_coach()) {
         $content .= '<div class="courseadminview-activity-3col"><span class="viewcaption">'.get_lang('SessionData').'</span>
             <table width="100%">';
                 $content .= CourseHome::show_session_data($session_id);
-             $content .=  '</table></div>';
+             $content .= '</table></div>';
     }
 
-    $content .=  '<div class="Authoringview">';
+    $content .= '<div class="Authoringview">';
                 $my_list = CourseHome::get_tools_category(TOOL_STUDENT_VIEW);
                 $content .= CourseHome::show_tools_category($my_list);
     $content .= '</div>';
@@ -106,7 +106,7 @@ if (api_is_allowed_to_edit(null, true) && !api_is_coach()) {
         $order_tool_list = array();
         foreach ($my_list as $key => $new_tool) {
             $tool_name = CourseHome::translate_tool_name($new_tool);
-            $order_tool_list [$key]= $tool_name;
+            $order_tool_list [$key] = $tool_name;
         }
         natsort($order_tool_list);
         $my_temp_tool_array = array();

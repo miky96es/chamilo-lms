@@ -52,18 +52,25 @@ $dialogForm->addLabel(
     Display::tag('p', null, ['id' => 'description', 'class' => 'form-control-static'])
 );
 
+$type = 'read'; //edit
+$tree = $skill->get_skills_tree($userId, null, true);
+$skill_visualizer = new SkillVisualizer($tree, $type);
+$tpl->assign('skill_visualizer', $skill_visualizer);
+//$html = $skill_visualizer->return_html();
+//$tpl->assign('html', $html);
+
 $tpl->assign('dialogForm', $dialogForm->returnForm());
 
 $url = api_get_path(WEB_AJAX_PATH)."skill.ajax.php?a=get_skills_tree_json&load_user=$userId";
 $tpl->assign('wheel_url', $url);
 
-$url  = api_get_path(WEB_AJAX_PATH).'skill.ajax.php?1=1';
+$url = api_get_path(WEB_AJAX_PATH).'skill.ajax.php?1=1';
 $tpl->assign('url', $url);
 
 $tpl->assign('user_info', $userInfo);
 $tpl->assign('ranking', $ranking);
 $tpl->assign('skills', $skills);
-$tpl->assign('skill_id_to_load', 0);
+
 $template = $tpl->get_template('skill/skill_wheel_student.tpl');
 $content = $tpl->fetch($template);
 $tpl->assign('content', $content);

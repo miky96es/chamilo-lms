@@ -18,7 +18,8 @@ if (!is_object($objQuestion)) {
 
 $questionName = $objQuestion->selectTitle();
 $answerType = $objQuestion->selectType();
-$pictureName = $objQuestion->selectPicture();
+$pictureName = $objQuestion->getPictureFilename();
+
 $debug = 0; // debug variable to get where we are
 $okPicture = empty($pictureName) ? false : true;
 
@@ -49,7 +50,7 @@ if ($modifyIn) {
         $objQuestion->addToList($exerciseId);
 
         // copies answers from $modifyAnswers to $questionId
-        $objAnswer->duplicate($questionId);
+        $objAnswer->duplicate($objQuestion);
 
         // construction of the duplicated Answers
         $objAnswer = new Answer($questionId);
@@ -571,7 +572,7 @@ if ($modifyAnswers) {
     );
 
     if (!empty($msgErr)) {
-        Display::display_normal_message($msgErr); //main API
+        echo Display::return_message($msgErr, 'normal'); //main API
     }
 
     $hotspot_admin_url = api_get_path(WEB_CODE_PATH) . 'exercise/admin.php?' . api_get_cidreq() . '&hotspotadmin=' . $modifyAnswers . '&exerciseId=' . $exerciseId . '&' . api_get_cidreq();
@@ -636,7 +637,7 @@ if ($modifyAnswers) {
                                 $isSelected = false;
                                 foreach ($flat_list as $id => $details) {
                                     $selected = '';
-                                    if ($id == $lp[$i]) {
+                                    if (isset($lp[$i]) && $id == $lp[$i]) {
                                         $isSelected = true;
                                         $selected = 'selected="selected"';
                                     }

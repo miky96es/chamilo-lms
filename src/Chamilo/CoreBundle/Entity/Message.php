@@ -321,7 +321,7 @@ class Message
      * Set votes
      *
      * @param integer $votes
-     * @return integer
+     * @return Message
      */
     public function setVotes($votes)
     {

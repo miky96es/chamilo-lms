@@ -168,7 +168,10 @@ class Template
         $this->twig->addFilter('img', new Twig_Filter_Function('Template::get_image'));
         $this->twig->addFilter('format_date', new Twig_Filter_Function('Template::format_date'));
         $this->twig->addFilter('api_get_local_time', new Twig_Filter_Function('api_get_local_time'));
+        // a combination of the two previous functions
+        $this->twig->addFilter('local_format_date', new Twig_Filter_Function('api_convert_and_format_date'));
         $this->twig->addFilter('user_info', new Twig_Filter_Function('api_get_user_info'));
+        $this->twig->addFilter('get_configuration_value', new Twig_Filter_Function('api_get_configuration_value'));
 
         /*
           $lexer = new Twig_Lexer($this->twig, array(
@@ -819,7 +822,8 @@ class Template
 
         // Loading email_editor js
         if (!api_is_anonymous() && api_get_setting('allow_email_editor') == 'true') {
-            $js_file_to_string .= $this->fetch('default/mail_editor/email_link.js.tpl');
+            $template = $this->get_template('mail_editor/email_link.js.tpl');
+            $js_file_to_string .= $this->fetch($template);
         }
 
         if (!$disable_js_and_css_files) {
@@ -888,8 +892,14 @@ class Template
             }
         }
 
-        $this->assign('online_button', Display::return_icon('statusonline.png', null, null, ICON_SIZE_ATOM));
-        $this->assign('offline_button',Display::return_icon('statusoffline.png', null, null, ICON_SIZE_ATOM));
+        $this->assign(
+        'online_button',
+            Display::return_icon('statusonline.png', null, [], ICON_SIZE_ATOM)
+        );
+        $this->assign(
+            'offline_button',
+            Display::return_icon('statusoffline.png', null, [], ICON_SIZE_ATOM)
+        );
 
         // Get language iso-code for this page - ignore errors
         $this->assign('document_language', api_get_language_isocode());
@@ -981,7 +991,7 @@ class Template
 
         //@todo move this in the template
         $rightFloatMenu = '';
-        $iconBug = Display::return_icon('bug.png', get_lang('ReportABug'), null, ICON_SIZE_LARGE);
+        $iconBug = Display::return_icon('bug.png', get_lang('ReportABug'), [], ICON_SIZE_LARGE);
         if (api_get_setting('show_link_bug_notification') == 'true' && $this->user_is_logged_in) {
             $rightFloatMenu = '<div class="report">
 		<a href="https://github.com/chamilo/chamilo-lms/wiki/How-to-report-issues" target="_blank">
@@ -992,7 +1002,7 @@ class Template
 
         if (api_get_setting('show_link_ticket_notification') == 'true' && $this->user_is_logged_in) {
             // by default is project_id = 1
-            $iconTicket = Display::return_icon('bug.png', get_lang('Ticket'), null, ICON_SIZE_LARGE);
+            $iconTicket = Display::return_icon('bug.png', get_lang('Ticket'), [], ICON_SIZE_LARGE);
             $courseInfo = api_get_course_info();
             $courseParams = '';
             if (!empty($courseInfo)) {
@@ -1172,13 +1182,29 @@ class Template
      */
     private function set_footer_parameters()
     {
-        if (api_get_setting('show_administrator_data') == 'true') {
+        if (api_get_setting('show_administrator_data') === 'true') {
+            $firstName = api_get_setting('administratorName');
+            $lastName = api_get_setting('administratorSurname');
+
+            if (!empty($firstName) && !empty($lastName)) {
+                $name = api_get_person_name($firstName, $lastName);
+            } else {
+                $name = $lastName;
+                if (empty($lastName)) {
+                    $name = $firstName;
+                }
+            }
+
+            $adminName = '';
             // Administrator name
-            $administrator_data = get_lang('Manager').' : '.Display::encrypted_mailto_link(
-                    api_get_setting('emailAdministrator'),
-                    api_get_person_name(api_get_setting('administratorName'), api_get_setting('administratorSurname'))
-                );
-            $this->assign('administrator_name', $administrator_data);
+            if (!empty($name)) {
+                $adminName = get_lang('Manager').' : '.
+                    Display::encrypted_mailto_link(
+                        api_get_setting('emailAdministrator'),
+                        $name
+                    );
+            }
+            $this->assign('administrator_name', $adminName);
         }
 
         // Loading footer extra content

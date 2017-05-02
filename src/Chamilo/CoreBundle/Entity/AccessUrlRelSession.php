@@ -83,6 +83,4 @@ class AccessUrlRelSession
     {
         return $this->session;
     }
-
-
 }

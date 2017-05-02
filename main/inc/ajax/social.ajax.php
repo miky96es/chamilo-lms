@@ -17,7 +17,7 @@ switch ($action) {
         if (isset($_GET['is_my_friend'])) {
             $relation_type = USER_RELATION_TYPE_FRIEND; //My friend
         } else {
-            $relation_type = USER_RELATION_TYPE_UNKNOW; //Unknown contact
+            $relation_type = USER_RELATION_TYPE_UNKNOWN; //Unknown contact
         }
 
         if (isset($_GET['friend_id'])) {
@@ -41,7 +41,7 @@ switch ($action) {
         if (isset($_GET['is_my_friend'])) {
             $relation_type = USER_RELATION_TYPE_FRIEND;//my friend
         } else {
-            $relation_type = USER_RELATION_TYPE_UNKNOW;//Contact unknown
+            $relation_type = USER_RELATION_TYPE_UNKNOWN;//Contact unknown
         }
         if (isset($_GET['denied_friend_id'])) {
             SocialManager::invitation_denied($_GET['denied_friend_id'], $current_user_id);
@@ -83,8 +83,8 @@ switch ($action) {
         if ($number_friends != 0) {
             $number_loop = ($number_friends/$number_of_images);
             $loop_friends = ceil($number_loop);
-            $j=0;
-            for ($k=0; $k<$loop_friends; $k++) {
+            $j = 0;
+            for ($k = 0; $k < $loop_friends; $k++) {
                 if ($j==$number_of_images) {
                     $number_of_images=$number_of_images*2;
                 }
@@ -154,7 +154,7 @@ switch ($action) {
                     }
 
                     //------Blog posts
-                    $result = get_blog_post_from_user($course_code, $user_id);
+                    $result = Blog::getBlogPostFromUser($course_id, $user_id, $course_code );
 
                     if (!empty($result)) {
                         api_display_tool_title(api_xml_http_response_encode(get_lang('Blog')));
@@ -166,7 +166,7 @@ switch ($action) {
                     }
 
                     //------Blog comments
-                    $result = get_blog_comment_from_user($course_code, $user_id);
+                    $result = Blog::getBlogCommentsFromUser($course_id, $user_id, $course_code);
                     if (!empty($result)) {
                         echo '<div  style="background:#FAF9F6; padding-left:10px;">';
                         api_display_tool_title(api_xml_http_response_encode(get_lang('BlogComments')));
@@ -195,7 +195,7 @@ switch ($action) {
                 break;
         }
         break;
-    case 'listWallMessage':
+    case 'list_wall_message':
         $start = isset($_REQUEST['start']) ? intval($_REQUEST['start']) - 1 : 0;
         $length = isset($_REQUEST['length']) ? intval($_REQUEST['length']) : 10;
         $userId = isset($_REQUEST['u']) ? intval($_REQUEST['u']) : api_get_user_id();
@@ -204,7 +204,7 @@ switch ($action) {
         if (!empty($array)) {
             ksort($array);
             $html = '';
-            for($i = 0; $i < count($array); $i++) {
+            for ($i = 0; $i < count($array); $i++) {
                 $post = $array[$i]['html'];
                 $comment = SocialManager::getWallMessagesHTML($userId, $friendId, $array[$i]['id']);
                 $html .= '<div class="panel panel-info"><div class="panel-body">'.$post.$comment.'</div></div>';
@@ -212,7 +212,7 @@ switch ($action) {
             $html .= Display::div(
                 Display::url(
                     get_lang('SeeMore'),
-                    api_get_self() . '?u=' . $userId . '&a=listWallMessage&start=' .
+                    api_get_self() . '?u=' . $userId . '&a=list_wall_message&start=' .
                     ($start + $length + 1) . '&length=' . $length,
                     array(
                         'class' => 'nextPage',
@@ -226,7 +226,7 @@ switch ($action) {
         }
         break;
         // Read the Url using OpenGraph and returns the hyperlinks content
-    case 'readUrlWithOpenGraph':
+    case 'read_url_with_open_graph':
         $url = isset($_POST['social_wall_new_msg_main']) ? $_POST['social_wall_new_msg_main'] : '';
         $url = trim($url);
         $html = '';
@@ -236,8 +236,6 @@ switch ($action) {
             );
         }
         echo $html;
-        break;
-    case 'voteMsg':
         break;
     default:
         echo '';

@@ -6,7 +6,7 @@
  */
 
 require_once __DIR__.'/../inc/global.inc.php';
-$current_course_tool  = TOOL_COURSE_MAINTENANCE;
+$current_course_tool = TOOL_COURSE_MAINTENANCE;
 $this_section = SECTION_COURSES;
 
 $nameTools = get_lang('Maintenance');
@@ -42,8 +42,8 @@ echo Display::page_header($nameTools);
 <div class="sectiontitle"><?php Display::display_icon('tool_delete.gif', get_lang('recycle_course')); ?>&nbsp;&nbsp;<a href="../coursecopy/recycle_course.php?<?php echo api_get_cidreq(); ?>"><?php echo get_lang('recycle_course'); ?></a></div>
 <div class="sectioncomment"><?php echo get_lang('DescriptionRecycleCourse'); ?></div>
 
-<div class="sectiontitle"><?php Display::display_icon('delete.png', get_lang('DelCourse')); ?>&nbsp;&nbsp;<a href="../course_info/delete_course.php?<?php echo api_get_cidreq(); ?>"><?php echo get_lang('DelCourse'); ?></a></div>
-<div class="sectioncomment"><?php echo get_lang('DescriptionDeleteCourse');	?></div>
+<div class="sectiontitle"><?php Display::display_icon('delete.gif', get_lang('DelCourse')); ?>&nbsp;&nbsp;<a href="../course_info/delete_course.php?<?php echo api_get_cidreq(); ?>"><?php echo get_lang('DelCourse'); ?></a></div>
+<div class="sectioncomment"><?php echo get_lang('DescriptionDeleteCourse'); ?></div>
 
 <?php
 // Footer

@@ -29,10 +29,9 @@ class MultipleAnswerCombination extends Question
     }
 
     /**
-     * function which redefines Question::createAnswersForm
-     * @param FormValidator $form
+     * @inheritdoc
      */
-    function createAnswersForm($form)
+    public function createAnswersForm($form)
     {
         $nb_answers = isset($_POST['nb_answers']) ? $_POST['nb_answers'] : 2;
         $nb_answers += (isset($_POST['lessAnswers']) ? -1 : (isset($_POST['moreAnswers']) ? 1 : 0));
@@ -43,8 +42,8 @@ class MultipleAnswerCombination extends Question
         $html .= '<tr>';
         $html .= '<th width="10">' . get_lang('Number') . '</th>';
         $html .= '<th width="10">' . get_lang('True') . '</th>';
-        $html .= '<th width="50%">' . get_lang('Comment') . '</th>';
         $html .= '<th width="50%">' . get_lang('Answer') . '</th>';
+        $html .= '<th width="50%">' . get_lang('Comment') . '</th>';
         $html .= '</tr>';
         $html .= '</thead>';
         $html .= '<tbody>';
@@ -69,7 +68,7 @@ class MultipleAnswerCombination extends Question
 
         if ($nb_answers < 1) {
             $nb_answers = 1;
-            Display::display_normal_message(get_lang('YouHaveToCreateAtLeastOneAnswer'));
+            echo Display::return_message(get_lang('YouHaveToCreateAtLeastOneAnswer'));
         }
 
         for ($i = 1; $i <= $nb_answers; ++$i) {
@@ -113,8 +112,9 @@ class MultipleAnswerCombination extends Question
             $answer_number = $form->addElement('text', 'counter[' . $i . ']', null, 'value="' . $i . '"');
             $answer_number->freeze();
 
-            $form->addElement('checkbox',
-                'correct[' . $i . ']',
+            $form->addElement(
+                'checkbox',
+                'correct['.$i.']',
                 null,
                 null,
                 'class="checkbox" style="margin-left: 0em;"'
@@ -142,7 +142,6 @@ class MultipleAnswerCombination extends Question
         }
 
         $form->addElement('html', '</tbody></table>');
-
         $form->add_multiple_required_rule(
             $boxes_names,
             get_lang('ChooseAtLeastOneCheckbox'),
@@ -153,9 +152,7 @@ class MultipleAnswerCombination extends Question
         $form->addText('weighting[1]', get_lang('Score'), false, ['value' => 10]);
 
         global $text;
-        //ie6 fix
         if ($obj_ex->edit_exercise_in_lp == true) {
-
             // setting the save button here and not in the question class.php
             $buttonGroup = [
                 $form->addButtonDelete(get_lang('LessAnswer'), 'lessAnswers', true),
@@ -223,7 +220,7 @@ class MultipleAnswerCombination extends Question
         // sets the total weighting of the question
         $this->updateWeighting($questionWeighting);
         $this->save();
-	}
+    }
 
     function return_header($feedback_type = null, $counter = null, $score = null)
     {

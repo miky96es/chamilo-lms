@@ -62,7 +62,7 @@ if ($form->validate()) {
         $cat->setGenerateCertificates(false);
     }
 
-    if ($values['hid_parent_id'] == 0 ) {
+    if ($values['hid_parent_id'] == 0) {
         $cat->set_certificate_min_score($values['certif_min_score']);
     }
 
@@ -79,14 +79,13 @@ if ($form->validate()) {
     } else {
         $cat->setIsRequirement(false);
     }
-
     $cat->save();
-    header('Location: '.Security::remove_XSS($_SESSION['gradebook_dest']).'?editcat=&selectcat=' . $cat->get_parent_id().'&'.api_get_cidreq());
+    header('Location: '.Security::remove_XSS($_SESSION['gradebook_dest']).'?editcat=&selectcat='.$cat->get_parent_id().'&'.api_get_cidreq());
     exit;
 }
 $selectcat = isset($_GET['selectcat']) ? (int) $_GET['selectcat'] : '';
 $interbreadcrumb[] = array(
-    'url' => Security::remove_XSS($_SESSION['gradebook_dest']) . '?selectcat=' . $selectcat . '&' . api_get_cidreq(),
+    'url' => Security::remove_XSS($_SESSION['gradebook_dest']).'?selectcat='.$selectcat.'&'.api_get_cidreq(),
     'name' => get_lang('Gradebook')
 );
 $this_section = SECTION_COURSES;

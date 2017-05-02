@@ -4,6 +4,7 @@
 use Chamilo\CoreBundle\Entity\ExtraField as EntityExtraField;
 use Chamilo\CoreBundle\Entity\Tag;
 use Chamilo\CoreBundle\Entity\ExtraFieldRelTag;
+use Chamilo\CoreBundle\Entity\ExtraFieldValues;
 
 /**
  * Class ExtraFieldValue
@@ -61,7 +62,8 @@ class ExtraFieldValue extends Model
      */
     public function get_count()
     {
-        $query = Database::getManager()->getRepository('ChamiloCoreBundle:ExtraFieldValues')->createQueryBuilder('e');
+        $em = Database::getManager();
+        $query = $em->getRepository('ChamiloCoreBundle:ExtraFieldValues')->createQueryBuilder('e');
         $query->select('count(e.id)');
         $query->where('e.extraFieldType = :type');
         $query->setParameter('type', $this->getExtraField()->getExtraFieldType());
@@ -216,28 +218,26 @@ class ExtraFieldValue extends Model
                             break;
                     }
 
-                    $fileName = ExtraField::FIELD_TYPE_FILE_IMAGE . "_{$params['item_id']}.png";
+                    $fileName = ExtraField::FIELD_TYPE_FILE_IMAGE."_{$params['item_id']}.png";
 
                     if (!file_exists($fileDir)) {
                         mkdir($fileDir, $dirPermissions, true);
                     }
 
                     if ($value['error'] == 0) {
-
                         //Crop the image to adjust 16:9 ratio
                         $crop = new Image($value['tmp_name']);
-                        $crop->crop($params['extra_' . $field_variable . '_crop_result']);
+                        $crop->crop($params['extra_'.$field_variable.'_crop_result']);
 
                         $imageExtraField = new Image($value['tmp_name']);
                         $imageExtraField->resize(400);
-                        $imageExtraField->send_image($fileDir . $fileName, -1, 'png');
+                        $imageExtraField->send_image($fileDir.$fileName, -1, 'png');
                         $newParams = array(
                             'item_id' => $params['item_id'],
                             'field_id' => $extraFieldInfo['id'],
-                            'value' => $fileDirStored . $fileName,
+                            'value' => $fileDirStored.$fileName,
                             'comment' => $comment
                         );
-
                         self::save($newParams);
                     }
                     break;
@@ -260,18 +260,18 @@ class ExtraFieldValue extends Model
                     }
 
                     $cleanedName = api_replace_dangerous_char($value['name']);
-                    $fileName = ExtraField::FIELD_TYPE_FILE . "_{$params['item_id']}_$cleanedName";
+                    $fileName = ExtraField::FIELD_TYPE_FILE."_{$params['item_id']}_$cleanedName";
                     if (!file_exists($fileDir)) {
                         mkdir($fileDir, $dirPermissions, true);
                     }
 
                     if ($value['error'] == 0) {
-                        moveUploadedFile($value, $fileDir . $fileName);
+                        moveUploadedFile($value, $fileDir.$fileName);
 
                         $new_params = array(
                             'item_id' => $params['item_id'],
                             'field_id' => $extraFieldInfo['id'],
-                            'value' => $fileDirStored . $fileName
+                            'value' => $fileDirStored.$fileName
                         );
 
                         if ($this->type !== 'session' && $this->type !== 'course') {
@@ -330,7 +330,7 @@ class ExtraFieldValue extends Model
         if (is_array($value)) {
             $value_to_insert = implode(';', $value);
         } else {
-            $value_to_insert = Database::escape_string($value);
+            $value_to_insert = $value;
         }
 
         $params['value'] = $value_to_insert;
@@ -411,7 +411,7 @@ class ExtraFieldValue extends Model
                 */
                 if (false) {
                     global $app;
-                    switch($this->type) {
+                    switch ($this->type) {
                         case 'question':
                             $extraFieldValue = new ChamiloLMS\Entity\QuestionFieldValues();
                             $extraFieldValue->setUserId(api_get_user_id());
@@ -445,7 +445,6 @@ class ExtraFieldValue extends Model
                     }
                 } else {
                     if ($extraFieldInfo['field_type'] == ExtraField::FIELD_TYPE_TAG) {
-
                         $option = new ExtraFieldOption($this->type);
                         $optionExists = $option->get($params['value']);
                         if (empty($optionExists)) {
@@ -473,7 +472,7 @@ class ExtraFieldValue extends Model
                 */
                 if (false) {
                     global $app;
-                    switch($this->type) {
+                    switch ($this->type) {
                         case 'question':
                             $extraFieldValue = $app['orm.ems']['db_write']->getRepository('ChamiloLMS\Entity\QuestionFieldValues')->find($field_values['id']);
                             $extraFieldValue->setUserId(api_get_user_id());
@@ -498,7 +497,6 @@ class ExtraFieldValue extends Model
 
                     if (isset($extraFieldValue)) {
                         if (!empty($params['value'])) {
-
                             /*
                              *  If the field value is similar to the previous value then the comment will be the same
                                 in order to no save in the log an empty record
@@ -624,7 +622,8 @@ class ExtraFieldValue extends Model
      * @param int $item_id Item ID from the original table
      * @param string $field_variable The name of the field we are looking for
      * @param bool $transform
-     * @param bool $allVisibility
+     * @param bool $filterByVisibility
+     * @param int $visibility
      *
      * @return mixed Array of results, or false on error or not found
      * @assert (-1,'') === false
@@ -732,6 +731,7 @@ class ExtraFieldValue extends Model
     }
 
     /**
+     * Get all the values stored for one specific field
      * @param int $fieldId
      *
      * @return array|bool
@@ -751,7 +751,6 @@ class ExtraFieldValue extends Model
         $result = Database::query($sql);
 
         if (Database::num_rows($result)) {
-
             return Database::store_result($result, 'ASSOC');
         }
 
@@ -839,7 +838,6 @@ class ExtraFieldValue extends Model
 
         $result = Database::query($sql);
         if (Database::num_rows($result)) {
-
             return Database::store_result($result, 'ASSOC');
         }
 
@@ -940,49 +938,48 @@ class ExtraFieldValue extends Model
     /**
      * Get all values for an item
      * @param int $itemId The item ID
-     * @param boolean $onlyVisibleFields Get the visible extra field only
+     * @param boolean $visibleToSelf Get the visible extra field only
+     * @param boolean $visibleToOthers
+     *
      * @return array
      */
-    public function getAllValuesForAnItem($itemId, $onlyVisibleFields = false)
+    public function getAllValuesForAnItem($itemId, $visibleToSelf = null, $visibleToOthers = null)
     {
         $em = Database::getManager();
-        $queryBuilder = $em->createQueryBuilder();
-        $fieldOptionsRepo = $em->getRepository('ChamiloCoreBundle:ExtraFieldOptions');
-
-        $queryBuilder = $queryBuilder->select('fv')
+        /** @var \Doctrine\DBAL\Query\QueryBuilder $qb */
+        $qb = $em->createQueryBuilder();
+        $qb = $qb->select('fv')
             ->from('ChamiloCoreBundle:ExtraFieldValues', 'fv')
-            ->innerJoin(
-                'ChamiloCoreBundle:ExtraField',
-                'f',
-                Doctrine\ORM\Query\Expr\Join::WITH,
-                'fv.field = f'
-            )
+            ->join('fv.field', 'f')
             ->where(
-                $queryBuilder->expr()->andX(
-                    $queryBuilder->expr()->eq('fv.itemId', ':item'),
-                    $queryBuilder->expr()->eq('f.extraFieldType', ':field_type')
-                )
+                $qb->expr()->eq('fv.itemId', ':item')
             );
 
-        if ($onlyVisibleFields) {
-            $queryBuilder->andWhere(
-                $queryBuilder->expr()->eq('f.visibleToSelf', true)
-            );
+        if (is_bool($visibleToSelf)) {
+            $qb
+                ->andWhere($qb->expr()->eq('f.visibleToSelf', ':visibleToSelf'))
+                ->setParameter('visibleToSelf', $visibleToSelf);
         }
 
-        $fieldValues = $queryBuilder
+        if (is_bool($visibleToOthers)) {
+            $qb
+                ->andWhere($qb->expr()->eq('f.visibleToOthers', ':visibleToOthers'))
+                ->setParameter('visibleToOthers', $visibleToOthers);
+        }
+
+        $fieldValues = $qb
             ->setParameter('item', $itemId)
-            ->setParameter('field_type', $this->getExtraField()->getExtraFieldType())
             ->getQuery()
             ->getResult();
 
-        $valueList = [];
+        $fieldOptionsRepo = $em->getRepository('ChamiloCoreBundle:ExtraFieldOptions');
 
+        $valueList = [];
+        /** @var ExtraFieldValues $fieldValue */
         foreach ($fieldValues as $fieldValue) {
             $item = [
                 'value' => $fieldValue
             ];
-
             switch ($fieldValue->getField()->getFieldType()) {
                 case ExtraField::FIELD_TYPE_SELECT:
                     $item['option'] = $fieldOptionsRepo->findOneBy([

@@ -1,21 +1,21 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-use \ChamiloSession as Session;
+use ChamiloSession as Session;
 
 /**
-*	Exercise result
-*	This script gets information from the script "exercise_submit.php",
-*	through the session, and calculates the score of the student for
-*	that exercise.
-*	Then it shows the results on the screen.
-*	@package chamilo.exercise
-*	@author Olivier Brouckaert, main author
-*	@author Roan Embrechts, some refactoring
-* 	@author Julio Montoya switchable fill in blank option added
-*
-*	@todo	split more code up in functions, move functions to library?
-*/
+ * Exercise result
+ * This script gets information from the script "exercise_submit.php",
+ * through the session, and calculates the score of the student for
+ * that exercise.
+ * Then it shows the results on the screen.
+ * @package chamilo.exercise
+ * @author Olivier Brouckaert, main author
+ * @author Roan Embrechts, some refactoring
+ * @author Julio Montoya switchable fill in blank option added
+ *
+ * @todo    split more code up in functions, move functions to library?
+ */
 
 $debug = false;
 require_once __DIR__.'/../inc/global.inc.php';
@@ -58,9 +58,9 @@ if (empty($objExercise)) {
 
 $gradebook = '';
 if (isset($_SESSION['gradebook'])) {
-	$gradebook=	$_SESSION['gradebook'];
+    $gradebook = $_SESSION['gradebook'];
 }
-if (!empty($gradebook) && $gradebook=='view') {
+if (!empty($gradebook) && $gradebook == 'view') {
     $interbreadcrumb[] = array(
         'url' => '../gradebook/'.$_SESSION['gradebook_dest'],
         'name' => get_lang('ToolGradebook'),
@@ -78,8 +78,8 @@ $htmlHeadXtra[] = api_get_css('js/hotspot/css/hotspot.css');
 $htmlHeadXtra[] = api_get_js('js/hotspot/js/hotspot.js');
 
 if ($origin != 'learnpath') {
-	// So we are not in learnpath tool
-	Display::display_header($nameTools, get_lang('Exercise'));
+    // So we are not in learnpath tool
+    Display::display_header($nameTools, get_lang('Exercise'));
 } else {
     $htmlHeadXtra[] = "
     <style>
@@ -105,17 +105,17 @@ $feedback_type = $objExercise->feedback_type;
 $exercise_stat_info = $objExercise->get_stat_track_exercise_info_by_exe_id($exe_id);
 
 if (!empty($exercise_stat_info['data_tracking'])) {
-	$question_list = explode(',', $exercise_stat_info['data_tracking']);
+	    $question_list = explode(',', $exercise_stat_info['data_tracking']);
 }
 
-$learnpath_id = $exercise_stat_info['orig_lp_id'];
-$learnpath_item_id = $exercise_stat_info['orig_lp_item_id'];
-$learnpath_item_view_id = $exercise_stat_info['orig_lp_item_view_id'];
+$learnpath_id = isset($exercise_stat_info['orig_lp_id']) ? $exercise_stat_info['orig_lp_id'] : 0;
+$learnpath_item_id = isset($exercise_stat_info['orig_lp_item_id']) ? $exercise_stat_info['orig_lp_item_id'] : 0;
+$learnpath_item_view_id = isset($exercise_stat_info['orig_lp_item_view_id']) ? $exercise_stat_info['orig_lp_item_view_id'] : 0;
 
 if ($origin == 'learnpath') {
 ?>
-	<form method="GET" action="exercise.php?<?php echo api_get_cidreq() ?>">
-	<input type="hidden" name="origin" value="<?php echo $origin; ?>" />
+    <form method="GET" action="exercise.php?<?php echo api_get_cidreq() ?>">
+    <input type="hidden" name="origin" value="<?php echo $origin; ?>" />
     <input type="hidden" name="learnpath_id" value="<?php echo $learnpath_id; ?>" />
     <input type="hidden" name="learnpath_item_id" 		value="<?php echo $learnpath_item_id; ?>" />
     <input type="hidden" name="learnpath_item_view_id"  value="<?php echo $learnpath_item_view_id; ?>" />
@@ -125,7 +125,7 @@ if ($origin == 'learnpath') {
 $i = $total_score = $max_score = 0;
 $remainingMessage = '';
 
-//We check if the user attempts before sending to the exercise_result.php
+// We check if the user attempts before sending to the exercise_result.php
 if ($objExercise->selectAttempts() > 0) {
     $attempt_count = Event::get_attempt_count(
         api_get_user_id(),
@@ -151,7 +151,7 @@ if ($objExercise->selectAttempts() > 0) {
         if ($remainingAttempts) {
             $attemptButton = Display::toolbarButton(
                 get_lang('AnotherAttempt'),
-                api_get_path(WEB_CODE_PATH) . 'exercise/overview.php?' . api_get_cidreq() . '&' . http_build_query([
+                api_get_path(WEB_CODE_PATH).'exercise/overview.php?'.api_get_cidreq().'&'.http_build_query([
                     'exerciseId' => $objExercise->id,
                     'learnpath_id' => $learnpath_id,
                     'learnpath_item_id' => $learnpath_item_id
@@ -161,11 +161,6 @@ if ($objExercise->selectAttempts() > 0) {
             );
             $attemptMessage = sprintf(get_lang('RemainingXAttempts'), $remainingAttempts);
             $remainingMessage = sprintf("<p>%s</p> %s", $attemptMessage, $attemptButton);
-
-            Display::display_normal_message(
-                $remainingMessage,
-                false
-            );
         }
     }
 }
@@ -177,10 +172,15 @@ if (!empty($exercise_stat_info)) {
 
 $max_score = $objExercise->get_max_score();
 
-Display::display_normal_message(get_lang('Saved').'<br />',false);
+echo Display::return_message(get_lang('Saved').'<br />', 'normal', false);
 
 // Display and save questions
-ExerciseLib::display_question_list_by_attempt($objExercise, $exe_id, true);
+ExerciseLib::display_question_list_by_attempt(
+    $objExercise,
+    $exe_id,
+    true,
+    $remainingMessage
+);
 
 //Unset session for clock time
 ExerciseLib::exercise_time_control_delete(
@@ -204,11 +204,11 @@ if ($origin != 'learnpath') {
         Session::erase('objExercise');
         Session::erase('exe_id');
     }
-	Display::display_footer();
+    Display::display_footer();
 } else {
 	$lp_mode = isset($_SESSION['lp_mode']) ? $_SESSION['lp_mode'] : null;
 	$url = '../lp/lp_controller.php?'.api_get_cidreq().'&action=view&lp_id='.$learnpath_id.'&lp_item_id='.$learnpath_item_id.'&exeId='.$exercise_stat_info['exe_id'].'&fb_type='.$objExercise->feedback_type.'#atoc_'.$learnpath_item_id;
-	$href = ($lp_mode == 'fullscreen')?' window.opener.location.href="'.$url.'" ':' top.location.href="'.$url.'"';
+	$href = ($lp_mode == 'fullscreen') ? ' window.opener.location.href="'.$url.'" ' : ' top.location.href="'.$url.'"';
 
     if (api_is_allowed_to_session_edit()) {
         Session::erase('objExercise');
@@ -217,8 +217,8 @@ if ($origin != 'learnpath') {
 
     Session::write('attempt_remaining', $remainingMessage);
 
-	// Record the results in the learning path, using the SCORM interface (API)
-	echo "<script>window.parent.API.void_save_asset('$total_score', '$max_score', 0, 'completed');</script>";
+    // Record the results in the learning path, using the SCORM interface (API)
+    echo "<script>window.parent.API.void_save_asset('$total_score', '$max_score', 0, 'completed');</script>";
     echo '<script type="text/javascript">'.$href.'</script>';
-	echo '</body></html>';
+    echo '</body></html>';
 }

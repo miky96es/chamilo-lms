@@ -34,7 +34,7 @@ class LinkForm extends FormValidator
         $action = null,
         $extra = null
     ) {
-        parent :: __construct($form_name, $method, $action);
+        parent::__construct($form_name, $method, $action);
 
         if (isset ($category_object)) {
             $this->category_object = $category_object;
@@ -44,19 +44,19 @@ class LinkForm extends FormValidator
             }
         }
 
-        if (isset ($extra)) {
+        if (isset($extra)) {
             $this->extra = $extra;
         }
-        if ($form_type == self :: TYPE_CREATE) {
+        if ($form_type == self::TYPE_CREATE) {
             $this->build_create();
-        } elseif ($form_type == self :: TYPE_MOVE) {
+        } elseif ($form_type == self::TYPE_MOVE) {
             $this->build_move();
         }
     }
 
     protected function build_move()
     {
-        $renderer =& $this->defaultRenderer();
+        $renderer = & $this->defaultRenderer();
         $renderer->setCustomElementTemplate('<span>{element}</span> ');
         $this->addElement(
             'static',
@@ -108,17 +108,24 @@ class LinkForm extends FormValidator
             if (!$link->needs_name_and_description() && count($link->get_all_links()) == '0') {
                 $select->addoption($link->get_type_name(), $linkType, 'disabled');
             } else {
-                if ($link->get_type() == LINK_EXERCISE) {
-                    // Adding exercise
-                    $select->addoption($link->get_type_name(), $linkType);
-                    // Adding hot potatoes
-                    $linkHot = $this->createLink(LINK_HOTPOTATOES, $courseCode);
+                $select->addoption($link->get_type_name(), $linkType);
+            }
+
+            if ($link->get_type() == LINK_EXERCISE) {
+                // Adding hot potatoes
+                $linkHot = $this->createLink(LINK_HOTPOTATOES, $courseCode);
+                $linkHot->setHp(true);
+                if ($linkHot->get_all_links(true)) {
                     $select->addoption(
                         '&nbsp;&nbsp;&nbsp;'.$linkHot->get_type_name(),
                         LINK_HOTPOTATOES
                     );
                 } else {
-                    $select->addoption($link->get_type_name(), $linkType);
+                    $select->addoption(
+                        '&nbsp;&nbsp;&nbsp;'.$linkHot->get_type_name(),
+                        LINK_HOTPOTATOES,
+                        'disabled'
+                    );
                 }
             }
         }
@@ -138,7 +145,7 @@ class LinkForm extends FormValidator
         $link = LinkFactory::create($link);
         if (!empty($courseCode)) {
             $link->set_course_code($courseCode);
-        } elseif(!empty($_GET['course_code'])) {
+        } elseif (!empty($_GET['course_code'])) {
             $link->set_course_code(Database::escape_string($_GET['course_code'], null, false));
         }
 

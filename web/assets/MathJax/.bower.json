@@ -14,12 +14,12 @@
     "MathML",
     "AsciiMath"
   ],
-  "version": "2.7.0",
-  "_release": "2.7.0",
+  "version": "2.7.1",
+  "_release": "2.7.1",
   "_resolution": {
     "type": "version",
-    "tag": "2.7.0",
-    "commit": "6273842a9746731b9ecca0de18ec9fd50a36df99"
+    "tag": "2.7.1",
+    "commit": "d71cc40666d213dceeb9353822a3b530656d9a4b"
   },
   "_source": "https://github.com/mathjax/MathJax.git",
   "_target": "2.7.*",

@@ -1,5 +1,6 @@
 <?php
 /* For license terms, see /license.txt */
+
 /**
  * Create new Services for the Buy Courses plugin
  * @package chamilo.plugin.buycourses
@@ -78,6 +79,13 @@ $form->addElement(
     null,
     get_lang('Session'),
     3
+);
+$form->addElement(
+    'radio',
+    'applies_to',
+    null,
+    get_lang('TemplateTitleCertificate'),
+    4
 );
 $form->addSelect(
     'owner_id',

@@ -9,7 +9,7 @@
 
 $work_id = $_GET['id'];
 require_once __DIR__.'/../inc/global.inc.php';
-$current_course_tool  = TOOL_STUDENTPUBLICATION;
+$current_course_tool = TOOL_STUDENTPUBLICATION;
 $_course = api_get_course_info();
 
 // Protection
@@ -78,7 +78,7 @@ if (api_is_allowed_to_edit() || api_is_coach()) {
                 title,
                 description,
                 insert_user_id,
-                insert_date,
+                sent_date,
                 contains_file
                 $filenameCondition
             FROM $tbl_student_publication AS work
@@ -119,7 +119,7 @@ if (api_is_allowed_to_edit() || api_is_coach()) {
                 title,
                 description,
                 insert_user_id,
-                insert_date,
+                sent_date,
                 contains_file
                 $filenameCondition
             FROM $tbl_student_publication AS work
@@ -146,7 +146,7 @@ $query = Database::query($sql);
 //add tem to the zip file
 while ($not_deleted_file = Database::fetch_assoc($query)) {
     $user_info = api_get_user_info($not_deleted_file['insert_user_id']);
-    $insert_date = api_get_local_time($not_deleted_file['insert_date']);
+    $insert_date = api_get_local_time($not_deleted_file['sent_date']);
     $insert_date = str_replace(array(':', '-', ' '), '_', $insert_date);
 
     $title = basename($not_deleted_file['title']);
@@ -170,8 +170,7 @@ while ($not_deleted_file = Database::fetch_assoc($query)) {
             'my_pre_add_callback'
         );
     } else {
-    // Convert texts in html files
-    //if ($not_deleted_file['contains_file'] == 0) {
+        // Convert texts in html files
         $filename = trim($filename).".html";
         $work_temp = api_get_path(SYS_ARCHIVE_PATH).api_get_unique_id().'_'.$filename;
         file_put_contents($work_temp, $not_deleted_file['description']);
@@ -190,10 +189,10 @@ while ($not_deleted_file = Database::fetch_assoc($query)) {
 if (!empty($files)) {
     $fileName = api_replace_dangerous_char($work_data['title']);
     // Logging
-    Event::event_download($fileName .'.zip (folder)');
+    Event::event_download($fileName.'.zip (folder)');
 
     //start download of created file
-    $name = $fileName .'.zip';
+    $name = $fileName.'.zip';
 
     if (Security::check_abs_path($temp_zip_file, api_get_path(SYS_ARCHIVE_PATH))) {
         DocumentManager::file_send_for_download($temp_zip_file, true, $name);

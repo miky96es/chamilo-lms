@@ -5,6 +5,9 @@ use Doctrine\ORM\EntityManager;
 use Chamilo\CoreBundle\Entity\ExtraField;
 use Chamilo\CoreBundle\Entity\ExtraFieldOptions;
 use Chamilo\CoreBundle\Entity\ExtraFieldValues;
+use Chamilo\TicketBundle\Entity\Project as TicketProject;
+use Chamilo\TicketBundle\Entity\Category as TicketCategory;
+use Chamilo\TicketBundle\Entity\Priority as TicketPriority;
 
 /**
  * Chamilo LMS
@@ -354,7 +357,7 @@ function write_system_config_file($path)
     global $new_version_stable;
 
     $root_sys = api_add_trailing_slash(str_replace('\\', '/', realpath($pathForm)));
-    $content = file_get_contents(dirname(__FILE__).'/'.SYSTEM_CONFIG_FILENAME);
+    $content = file_get_contents(__DIR__.'/'.SYSTEM_CONFIG_FILENAME);
 
     $config['{DATE_GENERATED}'] = date('r');
     $config['{DATABASE_HOST}'] = $dbHostForm;
@@ -710,7 +713,7 @@ function display_requirements(
     if (!$properlyAccessUrl) {
         echo '
             <div class="alert alert-danger">
-                ' . Display::return_icon('error.png', get_lang('Error'), [], ICON_SIZE_MEDIUM) .
+                ' . Display::return_icon('error.png', get_lang('Error'), [], ICON_SIZE_MEDIUM, true, false, true) .
             ' ' .
             sprintf(get_lang('InstallMultiURLDetectedNotMainURL'), api_get_configuration_value('root_web')) . '
             </div>
@@ -723,7 +726,15 @@ function display_requirements(
     $timezone = checkPhpSettingExists("date.timezone");
     if (!$timezone) {
         echo "<div class='alert alert-warning'>".
-            Display::return_icon('warning.png', get_lang('Warning'), '', ICON_SIZE_MEDIUM).
+            Display::return_icon(
+                'warning.png',
+                get_lang('Warning'),
+                '',
+                ICON_SIZE_MEDIUM,
+                true,
+                false,
+                false
+            ).
             get_lang("DateTimezoneSettingNotSet")."</div>";
     }
 
@@ -1931,6 +1942,7 @@ function check_course_script_interpretation($course_dir, $course_attempt_name, $
     $content = '<?php echo "123"; exit;';
 
     if (is_writable($file_name)) {
+
         if ($handler = @fopen($file_name, "w")) {
             //write content
             if (fwrite($handler, $content)) {
@@ -2734,7 +2746,100 @@ function finishInstallation(
 ) {
     $sysPath = !empty($sysPath) ? $sysPath : api_get_path(SYS_PATH);
 
-    // Inserting data
+    $connection = $manager->getConnection();
+
+    // Add version table
+    $connection->executeQuery('CREATE TABLE IF NOT EXISTS version (id int unsigned NOT NULL AUTO_INCREMENT, version varchar(20), PRIMARY KEY(id), UNIQUE(version))');
+
+    // Add tickets defaults
+    $ticketProject = new TicketProject();
+    $ticketProject
+        ->setId(1)
+        ->setName('Ticket System')
+        ->setInsertUserId(1);
+
+    $manager->persist($ticketProject);
+    $manager->flush();
+
+    $categories = array(
+        get_lang('TicketEnrollment') => get_lang('TicketsAboutEnrollment'),
+        get_lang('TicketGeneralInformation') => get_lang('TicketsAboutGeneralInformation'),
+        get_lang('TicketRequestAndPapework') => get_lang('TicketsAboutRequestAndPapework'),
+        get_lang('TicketAcademicIncidence') => get_lang('TicketsAboutAcademicIncidence'),
+        get_lang('TicketVirtualCampus') => get_lang('TicketsAboutVirtualCampus'),
+        get_lang('TicketOnlineEvaluation') => get_lang('TicketsAboutOnlineEvaluation')
+    );
+
+    $i = 1;
+
+    /**
+     * @var string $category
+     * @var string $description
+     */
+    foreach ($categories as $category => $description) {
+        // Online evaluation requires a course
+        $ticketCategory = new TicketCategory();
+        $ticketCategory
+            ->setId($i)
+            ->setName($category)
+            ->setDescription($description)
+            ->setProject($ticketProject)
+            ->setInsertUserId(1);
+
+        $isRequired = $i == 6;
+        $ticketCategory->setCourseRequired($isRequired);
+
+        $manager->persist($ticketCategory);
+        $manager->flush();
+
+        $i++;
+    }
+
+    // Default Priorities
+    $defaultPriorities = array(
+        TicketManager::PRIORITY_NORMAL => get_lang('PriorityNormal'),
+        TicketManager::PRIORITY_HIGH => get_lang('PriorityHigh'),
+        TicketManager::PRIORITY_LOW => get_lang('PriorityLow')
+    );
+
+    $table = Database::get_main_table(TABLE_TICKET_PRIORITY);
+    $i = 1;
+    foreach ($defaultPriorities as $code => $priority) {
+        $ticketPriority = new TicketPriority();
+        $ticketPriority
+            ->setId($i)
+            ->setName($priority)
+            ->setCode($code)
+            ->setInsertUserId(1);
+
+        $manager->persist($ticketPriority);
+        $manager->flush();
+        $i++;
+    }
+
+    $table = Database::get_main_table(TABLE_TICKET_STATUS);
+
+    // Default status
+    $defaultStatus = array(
+        TicketManager::STATUS_NEW => get_lang('StatusNew'),
+        TicketManager::STATUS_PENDING => get_lang('StatusPending'),
+        TicketManager::STATUS_UNCONFIRMED => get_lang('StatusUnconfirmed'),
+        TicketManager::STATUS_CLOSE => get_lang('StatusClose'),
+        TicketManager::STATUS_FORWARDED => get_lang('StatusForwarded')
+    );
+
+    $i = 1;
+    foreach ($defaultStatus as $code => $status) {
+        $attributes = array(
+            'id' => $i,
+            'code' => $code,
+            'name' => $status
+        );
+        Database::insert($table, $attributes);
+        $i++;
+    }
+
+    // Inserting data.sql
     $data = file_get_contents($sysPath.'main/install/data.sql');
     $result = $manager->getConnection()->prepare($data);
     $result->execute();
@@ -2913,7 +3018,7 @@ function get_group_picture_path_by_id($id, $type = 'web', $preview = false, $ano
 
     $id = intval($id);
 
-    //$group_table = Database :: get_main_table(TABLE_MAIN_GROUP);
+    //$group_table = Database::get_main_table(TABLE_MAIN_GROUP);
     $group_table = 'groups';
     $sql = "SELECT picture_uri FROM $group_table WHERE id=".$id;
     $res = Database::query($sql);
@@ -2945,9 +3050,11 @@ function get_group_picture_path_by_id($id, $type = 'web', $preview = false, $ano
 }
 
 /**
+ * Control the different steps of the migration through a big switch
  * @param string $fromVersion
  * @param EntityManager $manager
  * @param bool $processFiles
+ * @return bool Always returns true except if the process is broken
  */
 function migrateSwitch($fromVersion, $manager, $processFiles = true)
 {
@@ -2963,17 +3070,26 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
 
     switch ($fromVersion) {
         case '1.9.0':
+            //no break
         case '1.9.2':
+            //no break
         case '1.9.4':
+            //no break
         case '1.9.6':
+            //no break
         case '1.9.6.1':
+            //no break
         case '1.9.8':
+            //no break
         case '1.9.8.1':
+            //no break
         case '1.9.8.2':
+            //no break
         case '1.9.10':
+            //no break
         case '1.9.10.2':
+            //no break
         case '1.9.10.4':
-
             $database = new Database();
             $database->setManager($manager);
 

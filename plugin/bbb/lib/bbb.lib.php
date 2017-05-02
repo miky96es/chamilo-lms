@@ -97,14 +97,15 @@ class bbb
 
         if ($bbbPluginEnabled === 'true') {
             $userInfo = api_get_user_info();
-            if ($userInfo === false && !empty($isGlobalPerUser)) {
+            if (empty($userInfo) && !empty($isGlobalPerUser)) {
                 // If we are following a link to a global "per user" conference
                 // then generate a random guest name to join the conference
                 // because there is no part of the process where we give a name
-                $this->userCompleteName = 'Guest' . rand(1000,9999);
+                $this->userCompleteName = 'Guest'.rand(1000, 9999);
             } else {
                 $this->userCompleteName = $userInfo['complete_name'];
             }
+
 
             $this->salt = $bbb_salt;
             $info = parse_url($bbb_host);
@@ -158,7 +159,6 @@ class bbb
     public function isGlobalConference()
     {
         if ($this->isGlobalConferenceEnabled() === false) {
-
             return false;
         }
 
@@ -180,17 +180,14 @@ class bbb
     public function isConferenceManager()
     {
         if (api_is_coach() || api_is_platform_admin()) {
-
             return true;
         }
 
         if ($this->isGlobalConferencePerUserEnabled()) {
             $currentUserId = api_get_user_id();
             if ($this->userId === $currentUserId) {
-
                 return true;
             } else {
-
                 return false;
             }
         }
@@ -198,7 +195,6 @@ class bbb
         $courseInfo = api_get_course_info();
 
         if (!empty($courseInfo)) {
-
             return api_is_course_admin();
         }
 
@@ -591,19 +587,11 @@ class bbb
         $groupId = 0,
         $isAdminReport = false,
         $dateRange = []
-    )
-    {
+    ) {
         $em = Database::getManager();
-
         $manager = $this->isConferenceManager();
-        if ($manager) {
-            $pass = $this->getUserMeetingPassword();
-        } else {
-            $pass = $this->getModMeetingPassword();
-        }
 
         $conditions = [];
-
         if ($courseId || $sessionId || $groupId) {
             $conditions =  array(
                 'where' => array(
@@ -641,9 +629,25 @@ class bbb
         );
         $isGlobal = $this->isGlobalConference();
         $newMeetingList = array();
-        $item = array();
         foreach ($meetingList as $meetingDB) {
-            $meetingBBB = $this->getMeetingInfo(['meetingId' => $meetingDB['remote_id'], 'password' => $pass]);
+            $item = array();
+            $courseId = $meetingDB['c_id'];
+            $courseInfo = api_get_course_info_by_id($courseId);
+            $courseCode = $courseInfo['code'];
+
+            if ($manager) {
+                $pass = $this->getUserMeetingPassword($courseCode);
+            } else {
+                $pass = $this->getModMeetingPassword($courseCode);
+            }
+
+            $meetingBBB = $this->getMeetingInfo(
+                [
+                    'meetingId' => $meetingDB['remote_id'],
+                    'password' => $pass
+                ]
+            );
+
             if ($meetingBBB === false) {
                 //checking with the remote_id didn't work, so just in case and
                 // to provide backwards support, check with the id
@@ -659,11 +663,12 @@ class bbb
             if ($meetingDB['visibility'] == 0 && $this->isConferenceManager() === false) {
                 continue;
             }
+
             $meetingBBB['end_url'] = $this->endUrl($meetingDB);
 
             if (isset($meetingBBB['returncode']) && (string)$meetingBBB['returncode'] == 'FAILED') {
                 if ($meetingDB['status'] == 1 && $this->isConferenceManager()) {
-                    $this->endMeeting($meetingDB['id']);
+                    $this->endMeeting($meetingDB['id'], $courseCode);
                 }
             } else {
                 $meetingBBB['add_to_calendar_url'] = $this->addToCalendarUrl($meetingDB);
@@ -684,7 +689,6 @@ class bbb
                 }
 
                 $record = [];
-
                 if (empty($meetingDB['video_url'])) {
                     $recordingParams = ['meetingId' => $mId];
                     $records = $this->api->getRecordingsWithXmlResponseArray($recordingParams);
@@ -692,7 +696,6 @@ class bbb
                     if (!empty($records)) {
                         if (!isset($records['messageKey']) || $records['messageKey'] != 'noRecordings') {
                             $record = end($records);
-
                             if (!is_array($record) || !isset($record['recordId'])) {
                                 continue;
                             }
@@ -717,17 +720,21 @@ class bbb
                     : get_lang('NoRecording');
 
                 if ($isAdminReport) {
-                    $courseInfo = api_get_course_info_by_id($meetingDB['c_id']);
                     $this->forceCIdReq($courseInfo['code'], $meetingDB['session_id'], $meetingDB['group_id']);
                 }
 
                 $actionLinks = $this->getActionLinks($meetingDB, $record, $isGlobal, $isAdminReport);
                 $item['show_links']  = $recordLink;
-                $item['action_links'] = implode(PHP_EOL, $actionLinks);
+            } else {
+                $actionLinks = $this->getActionLinks($meetingDB, [], $isGlobal, $isAdminReport);
+
+                $item['show_links'] = get_lang('NoRecording');
             }
 
+            $item['action_links'] = implode(PHP_EOL, $actionLinks);
+
             $item['created_at'] = api_convert_and_format_date($meetingDB['created_at']);
-            //created_at
+            // created_at
             $meetingDB['created_at'] = $item['created_at']; //avoid overwrite in array_merge() below
 
             $item['publish_url'] = $this->publishUrl($meetingDB);
@@ -748,7 +755,6 @@ class bbb
 
             $item['course'] = $em->find('ChamiloCoreBundle:Course', $item['c_id']);
             $item['session'] = $em->find('ChamiloCoreBundle:Session', $item['session_id']);
-
             $newMeetingList[] = $item;
         }
 
@@ -791,21 +797,28 @@ class bbb
      * Closes a meeting (usually when the user click on the close button from
      * the conferences listing.
      * @param string The internal ID of the meeting (id field for this meeting)
+     * @param string $courseCode
+     *
      * @return void
      * @assert (0) === false
      */
-    public function endMeeting($id)
+    public function endMeeting($id, $courseCode = null)
     {
         if (empty($id)) {
-
             return false;
         }
-        $meetingData = Database::select('*', $this->table, array('where' => array('id = ?' => array($id))), 'first');
+
+        $meetingData = Database::select(
+            '*',
+            $this->table,
+            array('where' => array('id = ?' => array($id))),
+            'first'
+        );
         $manager = $this->isConferenceManager();
         if ($manager) {
-            $pass = $this->getUserMeetingPassword();
+            $pass = $this->getUserMeetingPassword($courseCode);
         } else {
-            $pass = $this->getModMeetingPassword();
+            $pass = $this->getModMeetingPassword($courseCode);
         }
 
         $endParams = array(
@@ -822,40 +835,43 @@ class bbb
 
     /**
      * Gets the password for a specific meeting for the current user
+     * @param string $courseCode
      * @return string A moderator password if user is teacher, or the course code otherwise
+     *
      */
-    public function getUserMeetingPassword()
+    public function getUserMeetingPassword($courseCode = null)
     {
         if ($this->isGlobalConferencePerUserEnabled()) {
-
             return 'url_'.$this->userId.'_'.api_get_current_access_url_id();
         }
 
         if ($this->isGlobalConference()) {
-
             return 'url_'.api_get_current_access_url_id();
         }
+        $courseCode = empty($courseCode) ? api_get_course_id() : $courseCode;
 
-        return api_get_course_id();
+        return $courseCode;
     }
 
     /**
      * Generated a moderator password for the meeting
+     * @param string $courseCode
+     *
      * @return string A password for the moderation of the videoconference
      */
-    public function getModMeetingPassword()
+    public function getModMeetingPassword($courseCode = null)
     {
         if ($this->isGlobalConferencePerUserEnabled()) {
-
             return 'url_'.$this->userId.'_'.api_get_current_access_url_id().'_mod';
         }
 
         if ($this->isGlobalConference()) {
-
             return 'url_'.api_get_current_access_url_id().'_mod';
         }
 
-        return api_get_course_id().'mod';
+        $courseCode = empty($courseCode) ? api_get_course_id() : $courseCode;
+
+        return $courseCode.'mod';
     }
 
     /**
@@ -970,6 +986,11 @@ class bbb
         $result = $this->api->deleteRecordingsWithXmlResponseArray($recordingParams);
 
         if (!empty($result) && isset($result['deleted']) && $result['deleted'] === 'true') {
+            Database::delete(
+                'plugin_bbb_room',
+                array('meeting_id = ?' => array($id))
+            );
+
             Database::delete(
                 $this->table,
                 array('id = ?' => array($id))
@@ -1280,14 +1301,27 @@ class bbb
         $links = [];
 
         if (empty($recordInfo)) {
-            $links[] = $linkVisibility;
+            if (!$isAdminReport) {
+                $links[] = Display::url(
+                    Display::return_icon('delete.png', get_lang('Delete')),
+                    $this->deleteRecordUrl($meetingInfo)
+                );
+                $links[] = $linkVisibility;
 
-            return $links;
+                return $links;
+            } else {
+                $links[] = Display::url(
+                    Display::return_icon('course_home.png', get_lang('GoToCourse')),
+                    $this->getListingUrl()
+                );
+
+                return $links;
+            }
         }
 
         if (!$isGlobal) {
             $links[] = Display::url(
-                Display::return_icon('link.gif', get_lang('CopyToLinkTool')),
+                Display::return_icon('link.gif', get_lang('UrlMeetingToShare')),
                 $this->copyToRecordToLinkTool($meetingInfo)
             );
             $links[] = Display::url(

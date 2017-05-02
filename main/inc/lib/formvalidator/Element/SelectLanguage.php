@@ -7,14 +7,14 @@
  */
 class SelectLanguage extends HTML_QuickForm_select
 {
-	/**
-	 * Class constructor
-	 */
+    /**
+     * Class constructor
+     */
     public function __construct(
         $elementName = null,
         $elementLabel = null,
-        $options = null,
-        $attributes = null
+        $options = [],
+        $attributes = []
     ) {
 		parent::__construct($elementName, $elementLabel, $options, $attributes);
 		// Get all languages

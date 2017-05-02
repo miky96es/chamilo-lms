@@ -11,7 +11,8 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
-class FormDemoModelType extends AbstractType{
+class FormDemoModelType extends AbstractType
+{
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
@@ -33,7 +34,7 @@ class FormDemoModelType extends AbstractType{
                 ->add('someChoices', 'choice', array('choices' => $choices, 'expanded' => true, 'multiple' => true))
                 ->add('username')
                 ->add('email')
-                ->add('termsAccepted','checkbox')
+                ->add('termsAccepted', 'checkbox')
                 ->add('message', 'textarea')
                 ->add('price')
                 ->add('date', 'date', array('widget' => 'single_text'))

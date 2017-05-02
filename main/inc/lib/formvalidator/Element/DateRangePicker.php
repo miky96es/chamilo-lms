@@ -7,8 +7,8 @@
 class DateRangePicker extends HTML_QuickForm_text
 {
     /**
-    * Constructor
-    */
+     * Constructor
+     */
     public function __construct($elementName = null, $elementLabel = null, $attributes = null)
     {
         if (!isset($attributes['id'])) {
@@ -88,7 +88,7 @@ class DateRangePicker extends HTML_QuickForm_text
         }
 
         $timePicker = 'true';
-        $timePickerValue =  $this->getAttribute('timePicker');
+        $timePickerValue = $this->getAttribute('timePicker');
         if (!empty($timePickerValue)) {
             $timePicker = $timePickerValue;
         }
@@ -119,6 +119,15 @@ class DateRangePicker extends HTML_QuickForm_text
                         customRangeLabel: '".addslashes(get_lang('CustomRange'))."',
                     }
                 });
+                
+                $('#$id').on('change', function() {
+                    var myPickedDates = $('#$id').val().split('/');
+                    var {$id}_start = myPickedDates[0].trim();
+                    var {$id}_end = myPickedDates[1].trim();
+                    
+                    $('input[name={$id}_start]').val({$id}_start);
+                    $('input[name={$id}_end]').val({$id}_end);
+                });
             });
         </script>";
 
@@ -144,11 +153,11 @@ class DateRangePicker extends HTML_QuickForm_text
     }
 
     /**
-    * @param array $dates result of parseDateRange()
-    *
-    * @return bool
-    */
-    public function validateDates($dates, $format = '')
+     * @param array $dates result of parseDateRange()
+     *
+     * @return bool
+     */
+    public function validateDates($dates, $format = null)
     {
         if (empty($dates['start']) || empty($dates['end'])) {
             return false;
@@ -166,5 +175,27 @@ class DateRangePicker extends HTML_QuickForm_text
         }
 
         return true;
+    }
+
+    /**
+     * @param mixed $value
+     * @param array $submitValues
+     * @param array $errors
+     * @return string
+     */
+    public function getSubmitValue($value, &$submitValues, &$errors)
+    {
+        /** @var DateRangePicker $element */
+        $elementName = $this->getName();
+        $parsedDates = $this->parseDateRange($value);
+        $validateFormat = $this->getAttribute('validate_format');
+
+        if (!$this->validateDates($parsedDates, $validateFormat)) {
+            $errors[$elementName] = get_lang('CheckDates');
+        }
+        $submitValues[$elementName.'_start'] = $parsedDates['start'];
+        $submitValues[$elementName.'_end'] = $parsedDates['end'];
+
+        return $value;
     }
 }

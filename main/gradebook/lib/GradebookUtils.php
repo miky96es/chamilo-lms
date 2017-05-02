@@ -35,7 +35,7 @@ class GradebookUtils
         $session_id = 0,
         $link_id = null
     ) {
-        $link = LinkFactory :: create($resource_type);
+        $link = LinkFactory::create($resource_type);
         $link->set_user_id(api_get_user_id());
         $link->set_course_code($course_code);
 
@@ -526,7 +526,7 @@ class GradebookUtils
         $count = (($offset + 10) > $datagen->get_total_items_count()) ? ($datagen->get_total_items_count() - $offset) : GRADEBOOK_ITEM_LIMIT;
         $header_names = $datagen->get_header_names($offset, $count, true);
         $data_array = $datagen->get_data(
-            FlatViewDataGenerator :: FVDG_SORT_LASTNAME,
+            FlatViewDataGenerator::FVDG_SORT_LASTNAME,
             0,
             null,
             $offset,
@@ -589,7 +589,7 @@ class GradebookUtils
 
     public static function overwritescore($resid, $importscore, $eval_max)
     {
-        $result = Result :: load($resid);
+        $result = Result::load($resid);
         if ($importscore > $eval_max) {
             header('Location: gradebook_view_result.php?selecteval=' . Security::remove_XSS($_GET['selecteval']) . '&overwritemax=');
             exit;
@@ -736,10 +736,21 @@ class GradebookUtils
      *
      * @return array
      */
-    public static function get_user_certificate_content($user_id, $course_code, $sessionId, $is_preview = false, $hide_print_button = false)
-    {
+    public static function get_user_certificate_content(
+        $user_id,
+        $course_code,
+        $sessionId,
+        $is_preview = false,
+        $hide_print_button = false
+    ) {
         // Generate document HTML
-        $content_html = DocumentManager::replace_user_info_into_html($user_id, $course_code, $sessionId, $is_preview);
+        $content_html = DocumentManager::replace_user_info_into_html(
+            $user_id,
+            $course_code,
+            $sessionId,
+            $is_preview
+        );
+
         $new_content_html = isset($content_html['content']) ? $content_html['content'] : null;
         $variables = isset($content_html['variables']) ? $content_html['variables'] : null;
         $path_image = api_get_path(WEB_COURSE_PATH) . api_get_course_path($course_code) . '/document/images/gallery';
@@ -749,37 +760,34 @@ class GradebookUtils
         $new_content_html = str_replace('/main/default_course_document', $path_image_in_default_course, $new_content_html);
         $new_content_html = str_replace(SYS_CODE_PATH . 'img/', api_get_path(WEB_IMG_PATH), $new_content_html);
 
-        $dom = new DOMDocument();
-        @$dom->loadHTML($new_content_html);
-
         //add print header
         if (!$hide_print_button) {
-            $head = $dom->getElementsByTagName('head');
-            $body = $dom->getElementsByTagName('body');
+            $print = '<style>#print_div {               
+                padding:4px;border: 0 none;position: absolute;top: 0px;right: 0px;
+            }            
+            @media print {
+                #print_div  {
+                    display: none !important;
+                }
+            }
+            </style>';
 
-            $printStyle = $dom->createElement('style');
-            $printStyle->setAttribute('media', 'print');
-            $printStyle->setAttribute('type', 'text/css');
-            $printStyle->textContent = '#print_div {visibility:hidden;}';
-
-            $head->item(0)->appendChild($printStyle);
-
-            $printIcon = $dom->createDocumentFragment();
-            $printIcon->appendXML(Display::return_icon('printmgr.gif', get_lang('Print')));
-
-            $printA = $dom->createElement('button');
-            $printA->setAttribute('onclick', 'window.print();');
-            $printA->setAttribute('id', 'print_div');
-            $printA->setAttribute('style', 'float:right; padding:4px; border: 0 none;');
-            $printA->appendChild($printIcon);
-
-            $body->item(0)->insertBefore($printA, $body->item(0)->firstChild);
+            $print .= Display::div(
+                Display::url(
+                    Display::return_icon('printmgr.gif', get_lang('Print')),
+                    'javascript:void()',
+                    ['onclick' => 'window.print();']
+                ),
+                ['id' => 'print_div']
+            );
+            $print .= '</html>';
+            $new_content_html = str_replace('</html>', $print, $new_content_html);
         }
 
-        return array(
-            'content' => $dom->saveHTML(),
+        return [
+            'content' => $new_content_html,
             'variables' => $variables
-        );
+        ];
     }
 
     /**
@@ -853,7 +861,7 @@ class GradebookUtils
         self::createDefaultCourseGradebook();
 
         // Cat list
-        $all_categories = Category :: load(null, null, $course_code, null, null, $session_id, false);
+        $all_categories = Category::load(null, null, $course_code, null, null, $session_id, false);
         $select_gradebook = $form->addElement('select', 'category_id', get_lang('SelectGradebook'));
 
         if (!empty($all_categories)) {
@@ -895,7 +903,6 @@ class GradebookUtils
         $params = array(),
         $mainCourseCategory = null
     ) {
-
         // Getting data
         $printable_data = self::get_printable_data(
             $cat[0],
@@ -908,7 +915,7 @@ class GradebookUtils
 
         // HTML report creation first
         $course_code = trim($cat[0]->get_course_code());
-        $displayscore = ScoreDisplay :: instance();
+        $displayscore = ScoreDisplay::instance();
         $customdisplays = $displayscore->get_custom_score_display_settings();
 
         $total = array();
@@ -1006,7 +1013,7 @@ class GradebookUtils
             'filename' => get_lang('FlatView') . '_' . api_get_utc_datetime(),
             'pdf_title' => $title,
             'course_code' => $course_code,
-            'add_signatures' => true
+            'add_signatures' => ['Drh', 'Teacher', 'Date']
         );
 
         $page_format = $params['orientation'] == 'landscape' ? 'A4-L' : 'A4';
@@ -1044,9 +1051,9 @@ class GradebookUtils
      */
     public static function get_users_in_course($courseCode)
     {
-        $tbl_course_user = Database:: get_main_table(TABLE_MAIN_COURSE_USER);
-        $tbl_session_course_user = Database:: get_main_table(TABLE_MAIN_SESSION_COURSE_USER);
-        $tbl_user = Database:: get_main_table(TABLE_MAIN_USER);
+        $tbl_course_user = Database::get_main_table(TABLE_MAIN_COURSE_USER);
+        $tbl_session_course_user = Database::get_main_table(TABLE_MAIN_SESSION_COURSE_USER);
+        $tbl_user = Database::get_main_table(TABLE_MAIN_USER);
         $order_clause = api_sort_by_first_name() ? ' ORDER BY firstname, lastname ASC' : ' ORDER BY lastname, firstname ASC';
 
         $current_session = api_get_session_id();
@@ -1111,7 +1118,7 @@ class GradebookUtils
 
         // By default add all user in course
         $coursecodes[api_get_course_id()] = '1';
-        $users = GradebookUtils::get_users_in_course(api_get_course_id());
+        $users = self::get_users_in_course(api_get_course_id());
 
         foreach ($evals as $eval) {
             $coursecode = $eval->get_course_code();
@@ -1119,12 +1126,12 @@ class GradebookUtils
             if (isset($coursecode) && !empty($coursecode)) {
                 if (!array_key_exists($coursecode, $coursecodes)) {
                     $coursecodes[$coursecode] = '1';
-                    $users = array_merge($users, GradebookUtils::get_users_in_course($coursecode));
+                    $users = array_merge($users, self::get_users_in_course($coursecode));
                 }
             } else {
                 // course independent evaluation
-                $tbl_user = Database :: get_main_table(TABLE_MAIN_USER);
-                $tbl_res = Database :: get_main_table(TABLE_MAIN_GRADEBOOK_RESULT);
+                $tbl_user = Database::get_main_table(TABLE_MAIN_USER);
+                $tbl_res = Database::get_main_table(TABLE_MAIN_GRADEBOOK_RESULT);
 
                 $sql = 'SELECT user.user_id, lastname, firstname, user.official_code
                         FROM '.$tbl_res.' as res, '.$tbl_user.' as user
@@ -1138,7 +1145,7 @@ class GradebookUtils
                 }
 
                 $result = Database::query($sql);
-                $users = array_merge($users, GradebookUtils::get_user_array_from_sql_result($result));
+                $users = array_merge($users, self::get_user_array_from_sql_result($result));
             }
         }
 
@@ -1147,7 +1154,7 @@ class GradebookUtils
             $coursecode = $link->get_course_code();
             if (!array_key_exists($coursecode,$coursecodes)) {
                 $coursecodes[$coursecode] = '1';
-                $users = array_merge($users, GradebookUtils::get_users_in_course($coursecode));
+                $users = array_merge($users, self::get_users_in_course($coursecode));
             }
         }
 
@@ -1166,8 +1173,8 @@ class GradebookUtils
         }
         $mask = Database::escape_string($mask);
 
-        $tbl_user = Database :: get_main_table(TABLE_MAIN_USER);
-        $tbl_cru = Database :: get_main_table(TABLE_MAIN_COURSE_USER);
+        $tbl_user = Database::get_main_table(TABLE_MAIN_USER);
+        $tbl_cru = Database::get_main_table(TABLE_MAIN_COURSE_USER);
         $sql = 'SELECT DISTINCT user.user_id, user.lastname, user.firstname, user.email, user.official_code
                 FROM ' . $tbl_user . ' user';
         if (!api_is_platform_admin()) {
@@ -1208,15 +1215,15 @@ class GradebookUtils
     public static function updateLinkWeight($linkId, $name, $weight)
     {
         $linkId = intval($linkId);
-        $weight = floatval($weight);
+        $weight = api_float_val($weight);
         $course_id = api_get_course_int_id();
 
         AbstractLink::add_link_log($linkId, $name);
         $table_link = Database::get_main_table(TABLE_MAIN_GRADEBOOK_LINK);
 
         $em = Database::getManager();
-        $tbl_forum_thread = Database:: get_course_table(TABLE_FORUM_THREAD);
-        $tbl_attendance = Database:: get_course_table(TABLE_ATTENDANCE);
+        $tbl_forum_thread = Database::get_course_table(TABLE_FORUM_THREAD);
+        $tbl_attendance = Database::get_course_table(TABLE_ATTENDANCE);
 
         $sql = 'UPDATE '.$table_link.' SET weight = '."'".Database::escape_string($weight)."'".'
                 WHERE id = '.$linkId;
@@ -1230,12 +1237,14 @@ class GradebookUtils
         $rs_attendance  = Database::query($sql);
         if (Database::num_rows($rs_attendance) > 0) {
             $row_attendance = Database::fetch_array($rs_attendance);
-            $sql = 'UPDATE '.$tbl_attendance.' SET attendance_weight ='.$weight.'
+            $sql = 'UPDATE '.$tbl_attendance.' SET 
+                    attendance_weight ='.api_float_val($weight).'
                     WHERE c_id = '.$course_id.' AND  id = '.intval($row_attendance['ref_id']);
             Database::query($sql);
         }
         // Update weight into forum thread
-        $sql = 'UPDATE '.$tbl_forum_thread.' SET thread_weight='.$weight.'
+        $sql = 'UPDATE '.$tbl_forum_thread.' SET 
+                thread_weight = '.api_float_val($weight).'
                 WHERE
                     c_id = '.$course_id.' AND
                     thread_id = (
@@ -1310,7 +1319,7 @@ class GradebookUtils
 
             $courseGradebookId = $courseGradebookCategory[0]->get_id();
 
-            $certificateInfo = GradebookUtils::get_certificate_by_user_id($courseGradebookId, $userId);
+            $certificateInfo = self::get_certificate_by_user_id($courseGradebookId, $userId);
 
             if (empty($certificateInfo)) {
                 continue;
@@ -1372,7 +1381,7 @@ class GradebookUtils
 
                 $courseGradebookId = $courseGradebookCategory[0]->get_id();
 
-                $certificateInfo = GradebookUtils::get_certificate_by_user_id(
+                $certificateInfo = self::get_certificate_by_user_id(
                     $courseGradebookId,
                     $userId
                 );

@@ -2,6 +2,7 @@
 /* See license terms in /license.txt */
 
 //use Chamilo\UserBundle\Entity\User;
+use Chamilo\CoreBundle\Component\Utils\ChamiloApi;
 
 /**
  * Class Event
@@ -318,7 +319,7 @@ class Event
      * @author Julio Montoya Armas <gugli100@gmail.com> Reworked 2010
      * @desc Record result of user when an exercise was done
      */
-    public static function update_event_exercice(
+    public static function update_event_exercise(
         $exeid,
         $exo_id,
         $score,
@@ -585,19 +586,21 @@ class Event
 
     /**
      * Record an hotspot spot for this attempt at answering an hotspot question
-     * @param	int		Exercise ID
-     * @param	int		Question ID
-     * @param	int		Answer ID
-     * @param	int		Whether this answer is correct (1) or not (0)
-     * @param	string	Coordinates of this point (e.g. 123;324)
-     * @param	bool update results?
-     * @return	boolean	Result of the insert query
+     * @param int $exeId
+     * @param int $questionId Question ID
+     * @param int $answerId Answer ID
+     * @param int $correct
+     * @param string $coords Coordinates of this point (e.g. 123;324)
+     * @param bool $updateResults
+     * @param int $exerciseId
+     *
+     * @return bool Result of the insert query
      * @uses Course code and user_id from global scope $_cid and $_user
      */
     public static function saveExerciseAttemptHotspot(
-        $exe_id,
-        $question_id,
-        $answer_id,
+        $exeId,
+        $questionId,
+        $answerId,
         $correct,
         $coords,
         $updateResults = false,
@@ -612,35 +615,39 @@ class Event
             }
         }
 
-        $tbl_track_e_hotspot = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_HOTSPOT);
+        if (empty($exeId)) {
+            return false;
+        }
+
+        $table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_HOTSPOT);
         if ($updateResults) {
             $params = array(
                 'hotspot_correct' => $correct,
                 'hotspot_coordinate' => $coords
             );
             Database::update(
-                $tbl_track_e_hotspot,
+                $table,
                 $params,
                 array(
                     'hotspot_user_id = ? AND hotspot_exe_id = ? AND hotspot_question_id = ? AND hotspot_answer_id = ? ' => array(
                         api_get_user_id(),
-                        $exe_id,
-                        $question_id,
-                        $answer_id
+                        $exeId,
+                        $questionId,
+                        $answerId
                     )
                 )
             );
 
         } else {
             return Database::insert(
-                $tbl_track_e_hotspot,
+                $table,
                 [
                     'hotspot_course_code' => api_get_course_id(),
                     'hotspot_user_id' => api_get_user_id(),
                     'c_id' => api_get_course_int_id(),
-                    'hotspot_exe_id' => $exe_id,
-                    'hotspot_question_id' => $question_id,
-                    'hotspot_answer_id' => $answer_id,
+                    'hotspot_exe_id' => $exeId,
+                    'hotspot_question_id' => $questionId,
+                    'hotspot_answer_id' => $answerId,
                     'hotspot_correct' => $correct,
                     'hotspot_coordinate' => $coords
                 ]
@@ -917,7 +924,7 @@ class Event
      */
     public static function get_attempt_count($user_id, $exerciseId, $lp_id, $lp_item_id, $lp_item_view_id)
     {
-        $stat_table = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
+        $stat_table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
         $user_id = intval($user_id);
         $exerciseId = intval($exerciseId);
         $lp_id = intval($lp_id);
@@ -938,7 +945,7 @@ class Event
 
         $query = Database::query($sql);
         if (Database::num_rows($query) > 0) {
-            $attempt = Database :: fetch_array($query, 'ASSOC');
+            $attempt = Database::fetch_array($query, 'ASSOC');
             return $attempt['count'];
         } else {
             return 0;
@@ -954,7 +961,7 @@ class Event
      */
     public static function get_attempt_count_not_finished($user_id, $exerciseId, $lp_id, $lp_item_id)
     {
-        $stat_table = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
+        $stat_table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
         $user_id = intval($user_id);
         $exerciseId = intval($exerciseId);
         $lp_id = intval($lp_id);
@@ -974,7 +981,7 @@ class Event
 
         $query = Database::query($sql);
         if (Database::num_rows($query) > 0) {
-            $attempt = Database :: fetch_array($query, 'ASSOC');
+            $attempt = Database::fetch_array($query, 'ASSOC');
             return $attempt['count'];
         } else {
             return 0;
@@ -1074,7 +1081,7 @@ class Event
             Database::query($sql);
         }
 
-        Event::addEvent(
+        self::addEvent(
             LOG_LP_ATTEMPT_DELETE,
             LOG_LP_ID,
             $lp_id,
@@ -1109,7 +1116,7 @@ class Event
                         session_id = $session_id AND
                         status = 'incomplete' ";
             Database::query($sql);
-            Event::addEvent(
+            self::addEvent(
                 LOG_EXERCISE_RESULT_DELETE,
                 LOG_EXERCISE_AND_USER_ID,
                 $exercise_id . '-' . $user_id,
@@ -1206,12 +1213,6 @@ class Event
             $list = array();
             while ($row = Database::fetch_array($res, 'ASSOC')) {
                 $list[$row['exe_id']] = $row;
-                $sql = "SELECT * FROM $table_track_attempt 
-                        WHERE exe_id = {$row['exe_id']}";
-                $res_question = Database::query($sql);
-                while ($row_q = Database::fetch_array($res_question, 'ASSOC')) {
-                    $list[$row['exe_id']]['question_list'][$row_q['question_id']] = $row_q;
-                }
             }
             return $list;
         }
@@ -1623,7 +1624,7 @@ class Event
      */
     public static function get_all_exercises_from_lp($lp_id, $course_id)
     {
-        $lp_item_table = Database :: get_course_table(TABLE_LP_ITEM);
+        $lp_item_table = Database::get_course_table(TABLE_LP_ITEM);
         $course_id = intval($course_id);
         $lp_id = intval($lp_id);
         $sql = "SELECT * FROM $lp_item_table
@@ -1715,7 +1716,7 @@ class Event
                     question_id = $question_id ";
         Database::query($sql);
 
-        Event::addEvent(
+        self::addEvent(
             LOG_QUESTION_RESULT_DELETE,
             LOG_EXERCISE_ATTEMPT_QUESTION_ID,
             $exe_id . '-' . $question_id,
@@ -1752,7 +1753,7 @@ class Event
                     c_id = $courseId AND
                     hotspot_question_id = $question_id ";
         Database::query($sql);
-        Event::addEvent(
+        self::addEvent(
             LOG_QUESTION_RESULT_DELETE,
             LOG_EXERCISE_ATTEMPT_QUESTION_ID,
             $exe_id . '-' . $question_id,
@@ -1764,15 +1765,18 @@ class Event
     }
 
     /**
-     * User logs in for the first time to a course
-     * @param int $courseId
-     * @param int $user_id
-     * @param int $session_id
+     * Registers in track_e_course_access when user logs in for the first time to a course
+     * @param int $courseId ID of the course
+     * @param int $user_id ID of the user
+     * @param int $session_id ID of the session (if any)
      */
     public static function event_course_login($courseId, $user_id, $session_id)
     {
         $course_tracking_table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
-        $time = api_get_utc_datetime();
+        $loginDate = $logoutDate = api_get_utc_datetime();
+
+        //$counter represents the number of time this record has been refreshed
+        $counter = 1;
 
         $courseId = intval($courseId);
         $user_id = intval($user_id);
@@ -1780,11 +1784,179 @@ class Event
         $ip = api_get_real_ip();
 
         $sql = "INSERT INTO $course_tracking_table(c_id, user_ip, user_id, login_course_date, logout_course_date, counter, session_id)
-                VALUES('".$courseId."', '".$ip."', '".$user_id."', '$time', '$time', '1', '".$session_id."')";
+                VALUES('".$courseId."', '".$ip."', '".$user_id."', '$loginDate', '$logoutDate', $counter, '".$session_id."')";
         Database::query($sql);
 
         // Course catalog stats modifications see #4191
-        CourseManager::update_course_ranking(null, null, null, null, true, false);
+        CourseManager::update_course_ranking(
+            null,
+            null,
+            null,
+            null,
+            true,
+            false
+        );
+    }
+
+    /**
+     * Register a "fake" time spent on the platform, for example to match the
+     * estimated time he took to author an assignment/work, see configuration
+     * setting considered_working_time.
+     * This assumes there is already some connection of the student to the
+     * course, otherwise he wouldn't be able to upload an assignment.
+     * This works by creating a new record, copy of the current one, then
+     * updating the current one to be just the considered_working_time and
+     * end at the same second as the user connected to the course.
+     * @param int $courseId The course in which to add the time
+     * @param int $userId The user for whom to add the time
+     * @param int $sessionId The session in which to add the time (if any)
+     * @param string $virtualTime The amount of time to be added, in a hh:mm:ss format. If int, we consider it is expressed in hours.
+     * @param string $ip IP address to go on record for this time record
+     *
+     * @return True on successful insertion, false otherwise
+     */
+    public static function eventAddVirtualCourseTime(
+        $courseId,
+        $userId,
+        $sessionId,
+        $virtualTime = '',
+        $ip = ''
+    ) {
+        $courseTrackingTable = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
+        $time = $loginDate = $logoutDate = api_get_utc_datetime();
+
+        $courseId = intval($courseId);
+        $userId = intval($userId);
+        $sessionId = intval($sessionId);
+        $ip = Database::escape_string($ip);
+
+        // Get the current latest course connection register. We need that
+        // record to re-use the data and create a new record.
+        $sql = "SELECT *
+                FROM $courseTrackingTable
+                WHERE
+                    user_id = ".$userId." AND
+                    c_id = ".$courseId."  AND
+                    session_id  = ".$sessionId." AND
+                    login_course_date > '$time' - INTERVAL 3600 SECOND
+                ORDER BY login_course_date DESC LIMIT 0,1";
+        $result = Database::query($sql);
+
+        // Ignore if we didn't find any course connection record in the last
+        // hour. In this case it wouldn't be right to add a "fake" time record.
+        if (Database::num_rows($result) > 0) {
+            // Found the latest connection
+            $row = Database::fetch_row($result);
+            $courseAccessId = $row[0];
+            $courseAccessLoginDate = $row[3];
+            $counter = $row[5];
+            $counter = $counter ? $counter : 0;
+            // Insert a new record, copy of the current one (except the logout
+            // date that we update to the current time)
+            $sql = "INSERT INTO $courseTrackingTable(
+                    c_id,
+                    user_ip, 
+                    user_id, 
+                    login_course_date, 
+                    logout_course_date, 
+                    counter, 
+                    session_id
+                ) VALUES(
+                    $courseId, 
+                    '$ip', 
+                    $userId, 
+                    '$courseAccessLoginDate', 
+                    '$logoutDate', 
+                    $counter, 
+                    $sessionId
+                )";
+            Database::query($sql);
+
+            $loginDate = ChamiloApi::addOrSubTimeToDateTime(
+                $virtualTime,
+                $courseAccessLoginDate,
+                false
+            );
+            // We update the course tracking table
+            $sql = "UPDATE $courseTrackingTable  
+                    SET 
+                        login_course_date = '$loginDate',
+                        logout_course_date = '$courseAccessLoginDate',
+                        counter = 0
+                    WHERE 
+                        course_access_id = ".intval($courseAccessId)." AND 
+                        session_id = ".$sessionId;
+            Database::query($sql);
+
+            return true;
+        }
+
+        return false;
+    }
+    /**
+     * Removes a "fake" time spent on the platform, for example to match the
+     * estimated time he took to author an assignment/work, see configuration
+     * setting considered_working_time.
+     * This method should be called when something that generated a fake
+     * time record is removed. Given the database link is weak (no real
+     * relationship kept between the deleted item and this record), this
+     * method just looks for the latest record that has the same time as the
+     * item's fake time, is in the past and in this course+session. If such a
+     * record cannot be found, it doesn't do anything.
+     * The IP address is not considered a useful filter here.
+     * @param int $courseId The course in which to add the time
+     * @param int $userId The user for whom to add the time
+     * @param int $sessionId The session in which to add the time (if any)
+     * @param string $virtualTime The amount of time to be added, in a hh:mm:ss format. If int, we consider it is expressed in hours.
+     * @return True on successful removal, false otherwise
+     */
+    public static function eventRemoveVirtualCourseTime($courseId, $userId, $sessionId = 0, $virtualTime = '')
+    {
+        if (empty($virtualTime)) {
+            return false;
+        }
+        $courseTrackingTable = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
+        $time = $loginDate = $logoutDate = api_get_utc_datetime();
+
+        $courseId = intval($courseId);
+        $userId = intval($userId);
+        $sessionId = intval($sessionId);
+        // Change $virtualTime format from hh:mm:ss to hhmmss which is the
+        // format returned by SQL for a subtraction of two datetime values
+        // @todo make sure this is portable between DBMSes
+        if (preg_match('/:/', $virtualTime)) {
+            list($h, $m, $s) = preg_split('/:/', $virtualTime);
+            $virtualTime = $h * 3600 + $m * 60 + $s;
+        } else {
+            $virtualTime *= 3600;
+        }
+
+        // Get the current latest course connection register. We need that
+        // record to re-use the data and create a new record.
+        $sql = "SELECT course_access_id
+                        FROM $courseTrackingTable
+                        WHERE
+                            user_id = $userId AND
+                            c_id = $courseId  AND
+                            session_id  = $sessionId AND
+                            counter = 0 AND
+                            (UNIX_TIMESTAMP(logout_course_date) - UNIX_TIMESTAMP(login_course_date)) = '$virtualTime'
+                        ORDER BY login_course_date DESC LIMIT 0,1";
+        $result = Database::query($sql);
+
+        // Ignore if we didn't find any course connection record in the last
+        // hour. In this case it wouldn't be right to add a "fake" time record.
+        if (Database::num_rows($result) > 0) {
+            // Found the latest connection
+            $row = Database::fetch_row($result);
+            $courseAccessId = $row[0];
+            $sql = "DELETE FROM $courseTrackingTable WHERE course_access_id = $courseAccessId";
+            $result = Database::query($sql);
+
+            return $result;
+        }
+
+        return false;
     }
 
     /**
