@@ -105,8 +105,8 @@ class LearnpathLink extends AbstractLink
     public function calc_score($stud_id = null, $type = null)
     {
         $tbl_stats = Database::get_course_table(TABLE_LP_VIEW);
-        $session_id = api_get_session_id();
-
+        $session_id = (api_get_session_id()==0)? $this->get_session_id() : api_get_session_id();
+        
         $sql = "SELECT * FROM $tbl_stats
                 WHERE
                 	c_id = " . $this->course_id . " AND
