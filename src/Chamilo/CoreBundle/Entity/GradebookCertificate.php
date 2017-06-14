@@ -58,6 +58,13 @@ class GradebookCertificate
     private $pathCertificate;
 
     /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="viewed_at", type="datetime", nullable=true)
+     */
+    private $viewedAt;
+
+    /**
      * Set catId
      *
      * @param integer $catId
@@ -180,5 +187,28 @@ class GradebookCertificate
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Set viewedAt
+     *
+     * @param \DateTime $viewedAt
+     * @return GradebookCertificate
+     */
+    public function setViewedAt($viewedAt)
+    {
+        $this->viewedAt = $viewedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get viewedAt
+     *
+     * @return \DateTime
+     */
+    public function getViewedAt()
+    {
+        return $this->viewedAt;
     }
 }
