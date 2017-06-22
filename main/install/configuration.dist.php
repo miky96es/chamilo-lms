@@ -361,12 +361,25 @@ $_configuration['tracking_columns'] = [
 */
 // Hide session link of course_block on index/userportal
 //$_configuration['remove_session_url']= false ;
+//
+//
+// AGENDA CONFIGURATION SETTINGS
 // Shows a legend in the agenda tool
 /*
 $_configuration['agenda_legend'] = [
     'red' => 'red caption',
     '#f0f' => 'another caption'
 ];*/
+// Set customs colors to agenda events
+//$_configuration['agenda_platform_color'] = 'red';
+//$_configuration['agenda_course_color'] = '#458B00';
+//$_configuration['agenda_group_color'] = '#A0522D';
+//$_configuration['agenda_session_color'] = '#00496D';
+//$_configuration['agenda_other_session_color'] = '#999';
+//$_configuration['agenda_personal_color'] = 'steel blue';
+//$_configuration['agenda_student_publication_color'] = '#FF8C00';
+//
+//
 // Save some tool titles with HTML editor
 // $_configuration['save_titles_as_html'] = false;
 // Show the full toolbar set to all CKEditor
@@ -458,4 +471,14 @@ $_configuration['agenda_legend'] = [
 //UPDATE extra_field_values SET updated_at = NULL WHERE CAST(updated_at AS CHAR(20)) = '0000-00-00 00:00:00';
 //ALTER TABLE extra_field_values modify column value longtext null;
 //$_configuration['allow_career_diagram'] = false;
+// Allow scheduled emails to session users. See class ProgrammedAnnouncement
+//$_configuration['allow_scheduled_announcements'] = false;
+// Add the list of emails as a bcc when sending an email.
+/*
+$_configuration['send_all_email_to'] = [
+    'emails' => [
+        'admin1@example.com',
+        'admin2@example.com',
+    ]
+];*/
 
