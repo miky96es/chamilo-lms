@@ -297,7 +297,7 @@ switch ($action) {
             api_not_allowed();
         }
 
-        if (!api_is_course_coach() || api_is_element_in_the_session(TOOL_ANNOUNCEMENT, $id)) {
+        if (!api_is_session_general_coach() || api_is_element_in_the_session(TOOL_ANNOUNCEMENT, $id)) {
             AnnouncementManager::delete_announcement($_course, $id);
             Display::addFlash(Display::return_message(get_lang('AnnouncementDeleted')));
         }
@@ -331,7 +331,7 @@ switch ($action) {
                     api_not_allowed();
                 }
 
-                if (!api_is_course_coach() ||
+                if (!api_is_session_general_coach() ||
                     api_is_element_in_the_session(TOOL_ANNOUNCEMENT, $_GET['id'])
                 ) {
                     AnnouncementManager::change_visibility_announcement(
@@ -484,12 +484,16 @@ switch ($action) {
         }
 
         $defaults['email_ann'] = true;
-
-        $form->addElement('text', 'title', get_lang('EmailTitle'), array("onkeypress" => "return event.keyCode != 13;")); //do not submit on enter
+        $form->addElement(
+            'text',
+            'title',
+            get_lang('EmailTitle'),
+            array("onkeypress" => "return event.keyCode != 13;")
+        );
         $form->addRule('title', get_lang('ThisFieldIsRequired'), 'required');
         $form->addElement('hidden', 'id');
         $htmlTags = "<b>".get_lang('Tags')."</b><br /><br />";
-        $tags = AnnouncementManager::get_tags();
+        $tags = AnnouncementManager::getTags();
 
         foreach ($tags as $tag) {
             $htmlTags .= "<b>".$tag."</b><br />";
