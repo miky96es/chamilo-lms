@@ -93,7 +93,6 @@ $code = isset($code) ? $code : null;
                 $pageCurrent = !empty($_REQUEST['pageCurrent']) ? intval($_REQUEST['pageCurrent']) : 1;
                 $form = '<form action="'.$webAction.'" method="GET" >';
                 $form .= '<input type="hidden" name="action" value="'.$action.'">';
-                $form .= '<input type="hidden" name="pageCurrent" value="'.$pageCurrent.'">';
                 $form .= '<input type="hidden" name="pageLength" value="'.$pageLength.'">';
                 $form .= '<div class="form-group">';
                 $form .= '<label>'.get_lang('CourseCategories').'</label>';
