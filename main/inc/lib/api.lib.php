@@ -7859,14 +7859,20 @@ function api_mail_html(
     if (isset($platform_email['SMTP_UNIQUE_SENDER']) && $platform_email['SMTP_UNIQUE_SENDER']) {
         $senderName = $platform_email['SMTP_FROM_NAME'];
         $senderEmail = $platform_email['SMTP_FROM_EMAIL'];
+        $valid = PHPMailer::validateAddress($senderEmail);
+        if ($valid) {
+            //force-set Sender to $senderEmail, otherwise SetFrom only does it if it is currently empty
+            $mail->Sender = $senderEmail;
+        }
     }
+
     $mail->SetFrom($senderEmail, $senderName);
     $mail->Subject = $subject;
     $mail->AltBody = strip_tags(
         str_replace('<br />', "\n", api_html_entity_decode($message))
     );
 
-    $list = api_get_configuration_value('send_all_email_to');
+    $list = api_get_configuration_value('send_all_emails_to');
     if (!empty($list) && isset($list['emails'])) {
         foreach ($list['emails'] as $email) {
             $mail->AddBCC($email);
@@ -7983,7 +7989,8 @@ function api_mail_html(
                 "Protocol: ".$mail->Mailer.' :: '.
                 "Host/Port: ".$mail->Host.':'.$mail->Port.' :: '.
                 "Authent/Open: ".($mail->SMTPAuth ? 'Authent' : 'Open').' :: '.
-                ($mail->SMTPAuth ? "  User/Pass: ".$mail->Username.':'.$mail->Password : '')
+                ($mail->SMTPAuth ? "  User/Pass: ".$mail->Username.':'.$mail->Password : '').' :: '.
+                "Sender: ".$mail->Sender
             );
         }
         return 0;
